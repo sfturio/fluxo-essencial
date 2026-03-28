@@ -94,9 +94,17 @@ function loadTasks() {
 }
 
 function normalizeTask(task) {
+  const description = (task.description || "").trim();
+  const rawCategory = (task.category || "").trim();
+  const categoryFromDescription = description ? inferCategory(description) : "";
+  const category =
+    rawCategory && rawCategory.toLowerCase() !== "geral"
+      ? rawCategory
+      : categoryFromDescription;
+
   return {
     ...task,
-    category: task.category || inferCategory(task.description || ""),
+    category,
   };
 }
 
@@ -119,7 +127,7 @@ function onCreateTask(event) {
     id: crypto.randomUUID(),
     title,
     description,
-    category: inferCategory(description),
+    category: description ? inferCategory(description) : "",
     status: "todo",
   });
 
@@ -130,10 +138,6 @@ function onCreateTask(event) {
 }
 
 function inferCategory(description) {
-  if (!description) {
-    return "Geral";
-  }
-
   return description.slice(0, 16).trim();
 }
 
@@ -156,16 +160,58 @@ function createTaskElement(task) {
 
   card.innerHTML = `
     <p class="task-title"></p>
+    <div class="rename-row">
+      <input class="rename-input" type="text" maxlength="120" />
+      <button type="button" class="confirm-rename" data-action="confirm-rename">Rename</button>
+    </div>
     <span class="task-category"></span>
     <div class="task-actions">
       <button type="button" data-action="left">←</button>
       <button type="button" data-action="right">→</button>
       <button type="button" class="delete" data-action="delete">Delete</button>
+      <button type="button" class="confirm-delete-btn" data-action="confirm-delete">Confirm</button>
+      <button type="button" class="cancel-delete-btn" data-action="cancel-delete">Cancel</button>
     </div>
   `;
 
   card.querySelector(".task-title").textContent = task.title;
-  card.querySelector(".task-category").textContent = task.category || "Geral";
+  const titleEl = card.querySelector(".task-title");
+  const renameInput = card.querySelector(".rename-input");
+  renameInput.value = task.title;
+
+  titleEl.addEventListener("click", () => {
+    card.classList.remove("confirm-delete");
+    card.classList.add("renaming");
+    renameInput.value = task.title;
+    renameInput.focus();
+    renameInput.select();
+  });
+
+  renameInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      renameTask(task.id, renameInput.value, card);
+    }
+    if (event.key === "Escape") {
+      event.preventDefault();
+      card.classList.remove("renaming");
+      renameInput.value = task.title;
+    }
+  });
+
+  renameInput.addEventListener("blur", () => {
+    // Keep row open only while actively renaming.
+    setTimeout(() => {
+      if (!card.contains(document.activeElement)) {
+        card.classList.remove("renaming");
+        renameInput.value = task.title;
+      }
+    }, 0);
+  });
+
+  const categoryEl = card.querySelector(".task-category");
+  categoryEl.textContent = task.category || "";
+  categoryEl.style.display = task.category ? "inline-block" : "none";
 
   const leftButton = card.querySelector('[data-action="left"]');
   const rightButton = card.querySelector('[data-action="right"]');
@@ -180,17 +226,36 @@ function createTaskElement(task) {
     }
 
     if (action === "delete") {
+      card.classList.remove("renaming");
+      card.classList.add("confirm-delete");
+      return;
+    }
+
+    if (action === "confirm-delete") {
       deleteTask(task.id);
       return;
     }
 
+    if (action === "cancel-delete") {
+      card.classList.remove("confirm-delete");
+      return;
+    }
+
     if (action === "left") {
+      card.classList.remove("confirm-delete");
       moveTask(task.id, -1);
       return;
     }
 
     if (action === "right") {
+      card.classList.remove("confirm-delete");
       moveTask(task.id, 1);
+      return;
+    }
+
+    if (action === "confirm-rename") {
+      card.classList.remove("confirm-delete");
+      renameTask(task.id, renameInput.value, card);
     }
   });
 
@@ -208,6 +273,26 @@ function createTaskElement(task) {
   });
 
   return card;
+}
+
+function renameTask(taskId, nextTitle, cardElement) {
+  const title = (nextTitle || "").trim();
+  if (!title) {
+    return;
+  }
+
+  const task = tasks.find((item) => item.id === taskId);
+  if (!task) {
+    return;
+  }
+
+  task.title = title;
+  saveTasks();
+  render();
+
+  if (cardElement) {
+    cardElement.classList.remove("renaming");
+  }
 }
 
 function moveTask(taskId, direction) {

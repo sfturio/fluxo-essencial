@@ -192,11 +192,52 @@ body.dark .task-list.drag-over {
   font-size: 1.05rem;
   line-height: 1.35;
   font-weight: 500;
+  cursor: text;
 }
 
 .task.done .task-title {
   text-decoration: line-through;
   opacity: 0.55;
+}
+
+.rename-row {
+  display: none;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+
+.task.renaming .rename-row {
+  display: flex;
+}
+
+.rename-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: 1px solid var(--line-soft);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-card) 92%, var(--surface-low));
+  color: var(--text);
+  font: inherit;
+  font-size: 0.86rem;
+  padding: 0.35rem 0.5rem;
+}
+
+.confirm-rename {
+  border: none;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-low) 88%, var(--surface-card));
+  color: color-mix(in srgb, var(--primary) 88%, var(--text));
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 0.35rem 0.55rem;
+  cursor: pointer;
+}
+
+.confirm-rename:hover {
+  background: color-mix(in srgb, var(--surface-low) 76%, var(--surface-card));
 }
 
 .task-category {
@@ -243,6 +284,26 @@ body.dark .task-list.drag-over {
 }
 
 .task-actions .delete {
+  color: #8a5858;
+}
+
+.confirm-delete-btn,
+.cancel-delete-btn {
+  display: none;
+}
+
+.task.confirm-delete .task-actions button[data-action="left"],
+.task.confirm-delete .task-actions button[data-action="right"],
+.task.confirm-delete .task-actions button[data-action="delete"] {
+  display: none;
+}
+
+.task.confirm-delete .confirm-delete-btn,
+.task.confirm-delete .cancel-delete-btn {
+  display: inline-block;
+}
+
+.task.confirm-delete .confirm-delete-btn {
   color: #8a5858;
 }
 
