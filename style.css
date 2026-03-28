@@ -83,6 +83,11 @@ h1 {
   color: color-mix(in srgb, var(--text-muted) 78%, transparent);
 }
 
+#board-name {
+  color: color-mix(in srgb, var(--primary) 90%, var(--text));
+  font-weight: 800;
+}
+
 .theme-btn {
   border: none;
   background: transparent;
@@ -522,7 +527,8 @@ body.focus-mode .column[data-column="inprogress"] h2::after {
   gap: 0.35rem;
   margin-bottom: 0.55rem;
   max-height: 44vh;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .board-item {
@@ -532,10 +538,11 @@ body.focus-mode .column[data-column="inprogress"] h2::after {
   align-items: center;
   border-radius: 10px;
   padding: 0.16rem;
+  transition: padding 0.16s ease;
 }
 
 .board-item.active-table {
-  background: color-mix(in srgb, var(--surface-low) 72%, var(--surface-card));
+  padding: 0.24rem;
 }
 
 .board-item button {
@@ -550,10 +557,12 @@ body.focus-mode .column[data-column="inprogress"] h2::after {
   cursor: pointer;
 }
 
+.board-select:hover {
+  background: color-mix(in srgb, var(--surface-low) 70%, var(--surface-card));
+}
+
 .board-item button.active {
-  background: color-mix(in srgb, var(--surface-low) 72%, var(--surface-card));
-  color: color-mix(in srgb, var(--primary) 86%, var(--text));
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .board-actions {
