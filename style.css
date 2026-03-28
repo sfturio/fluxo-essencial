@@ -223,11 +223,11 @@ body.dark .task-list.drag-over {
   border-radius: 10px;
   padding: 1rem;
   cursor: grab;
-  transition: background-color 0.22s ease, transform 0.16s ease, opacity 0.2s ease;
+  transition: transform 0.16s ease, opacity 0.2s ease;
 }
 
 .task:hover {
-  background: color-mix(in srgb, var(--surface-hover) 86%, var(--surface-card));
+  background: var(--surface-card);
 }
 
 .task.dragging {
