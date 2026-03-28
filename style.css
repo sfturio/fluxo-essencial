@@ -58,208 +58,6 @@ body.dark {
   margin-bottom: 1rem;
 }
 
-.topbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.new-board-btn {
-  border: none;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--surface-low) 84%, var(--surface-card));
-  color: var(--primary);
-  font-size: 1.2rem;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.new-board-btn:hover {
-  background: color-mix(in srgb, var(--surface-low) 70%, var(--surface-card));
-}
-
-.board-menu-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(12, 16, 14, 0.28);
-  backdrop-filter: blur(2px);
-  z-index: 40;
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-end;
-  padding: 4.2rem 1.5rem 0;
-}
-
-.board-menu-overlay[hidden] {
-  display: none !important;
-}
-
-.board-menu {
-  width: min(320px, 92vw);
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--surface-card) 92%, var(--surface-low));
-  border: 1px solid var(--line-soft);
-  padding: 0.85rem;
-}
-
-.board-menu h3 {
-  margin: 0 0 0.65rem;
-  font-size: 0.82rem;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--text) 70%, transparent);
-}
-
-.board-menu-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.close-board-menu-btn {
-  border: none;
-  width: 1.8rem;
-  height: 1.8rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--surface-low) 86%, var(--surface-card));
-  color: color-mix(in srgb, var(--text) 78%, transparent);
-  font-size: 1.05rem;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.close-board-menu-btn:hover {
-  background: color-mix(in srgb, var(--surface-low) 72%, var(--surface-card));
-}
-
-.board-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.42rem;
-  margin-bottom: 0.7rem;
-}
-
-.board-row {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: 0.35rem;
-  align-items: center;
-}
-
-.board-row.editing {
-  grid-template-columns: 1fr auto auto;
-}
-
-.board-item {
-  width: 100%;
-  text-align: left;
-  border: none;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--surface-low) 86%, var(--surface-card));
-  color: color-mix(in srgb, var(--text) 88%, transparent);
-  padding: 0.5rem 0.6rem;
-  font: inherit;
-  font-size: 0.86rem;
-  cursor: pointer;
-}
-
-.board-item:hover {
-  background: color-mix(in srgb, var(--surface-low) 72%, var(--surface-card));
-}
-
-.board-item.active {
-  background: color-mix(in srgb, var(--primary) 16%, var(--surface-low));
-  color: color-mix(in srgb, var(--text) 92%, var(--primary));
-}
-
-.board-action-btn {
-  border: none;
-  border-radius: 7px;
-  background: color-mix(in srgb, var(--surface-low) 88%, var(--surface-card));
-  color: color-mix(in srgb, var(--text) 78%, transparent);
-  padding: 0.45rem 0.5rem;
-  font: inherit;
-  font-size: 0.72rem;
-  cursor: pointer;
-}
-
-.board-action-btn:hover {
-  background: color-mix(in srgb, var(--surface-low) 72%, var(--surface-card));
-}
-
-.board-action-btn.delete {
-  color: #8a5858;
-}
-
-.board-inline-slot {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-  margin-bottom: 0.6rem;
-}
-
-.board-inline-row {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: 0.35rem;
-}
-
-.board-name-input {
-  border: none;
-  outline: 1px solid var(--line-soft);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--surface-card) 92%, var(--surface-low));
-  color: var(--text);
-  font: inherit;
-  font-size: 0.84rem;
-  padding: 0.45rem 0.55rem;
-}
-
-.board-inline-btn {
-  border: none;
-  border-radius: 7px;
-  background: color-mix(in srgb, var(--surface-low) 88%, var(--surface-card));
-  color: color-mix(in srgb, var(--primary) 88%, var(--text));
-  font: inherit;
-  font-size: 0.72rem;
-  padding: 0.45rem 0.5rem;
-  cursor: pointer;
-}
-
-.board-inline-btn:hover {
-  background: color-mix(in srgb, var(--surface-low) 72%, var(--surface-card));
-}
-
-.board-inline-btn.delete {
-  color: #8a5858;
-}
-
-.board-menu-message {
-  min-height: 1rem;
-  margin: 0 0 0.55rem;
-  font-size: 0.72rem;
-  color: color-mix(in srgb, var(--text-muted) 86%, transparent);
-}
-
-.add-board-btn {
-  width: 100%;
-  border: none;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--surface-low) 82%, var(--surface-card));
-  color: color-mix(in srgb, var(--primary) 86%, var(--text));
-  padding: 0.55rem 0.6rem;
-  font: inherit;
-  font-size: 0.84rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.add-board-btn:hover {
-  background: color-mix(in srgb, var(--surface-low) 70%, var(--surface-card));
-}
-
 h1 {
   margin: 0;
   font-size: 2rem;
@@ -332,6 +130,19 @@ body.dark .task-form button:hover {
   background: #2b3630;
 }
 
+#ia-generate-btn {
+  background: color-mix(in srgb, var(--surface-low) 90%, var(--surface-card));
+  color: color-mix(in srgb, var(--text-muted) 86%, var(--primary));
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: background-color 0.22s ease, color 0.22s ease;
+}
+
+#ia-generate-btn:hover {
+  background: color-mix(in srgb, var(--surface-low) 74%, var(--surface-card));
+  color: color-mix(in srgb, var(--primary) 82%, var(--text));
+}
+
 .board {
   display: grid;
   grid-template-columns: repeat(3, minmax(280px, 1fr));
@@ -394,52 +205,11 @@ body.dark .task-list.drag-over {
   font-size: 1.05rem;
   line-height: 1.35;
   font-weight: 500;
-  cursor: text;
 }
 
 .task.done .task-title {
   text-decoration: line-through;
   opacity: 0.55;
-}
-
-.rename-row {
-  display: none;
-  gap: 0.4rem;
-  margin-top: 0.6rem;
-}
-
-.task.renaming .rename-row {
-  display: flex;
-}
-
-.rename-input {
-  flex: 1;
-  min-width: 0;
-  border: none;
-  outline: 1px solid var(--line-soft);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--surface-card) 92%, var(--surface-low));
-  color: var(--text);
-  font: inherit;
-  font-size: 0.86rem;
-  padding: 0.35rem 0.5rem;
-}
-
-.confirm-rename {
-  border: none;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--surface-low) 88%, var(--surface-card));
-  color: color-mix(in srgb, var(--primary) 88%, var(--text));
-  font: inherit;
-  font-size: 0.76rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  padding: 0.35rem 0.55rem;
-  cursor: pointer;
-}
-
-.confirm-rename:hover {
-  background: color-mix(in srgb, var(--surface-low) 76%, var(--surface-card));
 }
 
 .task-category {
@@ -486,26 +256,6 @@ body.dark .task-list.drag-over {
 }
 
 .task-actions .delete {
-  color: #8a5858;
-}
-
-.confirm-delete-btn,
-.cancel-delete-btn {
-  display: none;
-}
-
-.task.confirm-delete .task-actions button[data-action="left"],
-.task.confirm-delete .task-actions button[data-action="right"],
-.task.confirm-delete .task-actions button[data-action="delete"] {
-  display: none;
-}
-
-.task.confirm-delete .confirm-delete-btn,
-.task.confirm-delete .cancel-delete-btn {
-  display: inline-block;
-}
-
-.task.confirm-delete .confirm-delete-btn {
   color: #8a5858;
 }
 
@@ -566,14 +316,6 @@ body.focus-mode .task-form {
   display: none;
 }
 
-body.focus-mode .topbar > div:first-child,
-body.focus-mode .topbar-actions {
-  filter: blur(3px);
-  opacity: 0.55;
-  pointer-events: none;
-  transition: filter 0.2s ease, opacity 0.2s ease;
-}
-
 body.focus-mode .board {
   grid-template-columns: minmax(320px, 760px);
   justify-content: center;
@@ -592,6 +334,116 @@ body.focus-mode .column[data-column="inprogress"] h2::after {
 
 .focus-btn.pulse {
   animation: focusPulse 300ms ease-out;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(7, 10, 8, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 50;
+}
+
+.ai-modal {
+  width: min(560px, 100%);
+  background: color-mix(in srgb, var(--surface-card) 92%, var(--surface-low));
+  border-radius: 16px;
+  padding: 1rem;
+  box-shadow: 0 18px 36px rgba(6, 10, 8, 0.2);
+}
+
+.ai-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.ai-modal h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.icon-close {
+  border: none;
+  background: transparent;
+  color: color-mix(in srgb, var(--text-muted) 88%, var(--text));
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.icon-close:hover {
+  background: color-mix(in srgb, var(--surface-low) 82%, var(--surface-card));
+}
+
+.ai-modal p {
+  margin: 0.45rem 0 0.8rem;
+  font-size: 0.92rem;
+  color: color-mix(in srgb, var(--text-muted) 82%, transparent);
+}
+
+.ai-modal textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 160px;
+  border: none;
+  border-radius: 12px;
+  background: var(--surface-low);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  padding: 0.78rem;
+  outline: 1px solid transparent;
+}
+
+.ai-modal textarea:focus {
+  outline: 1px solid var(--line-soft);
+}
+
+.ai-modal-actions {
+  margin-top: 0.8rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+.ai-modal-actions button {
+  border: none;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.56rem 0.85rem;
+  cursor: pointer;
+}
+
+.ai-modal-actions .secondary {
+  background: color-mix(in srgb, var(--surface-low) 88%, var(--surface-card));
+  color: color-mix(in srgb, var(--text-muted) 86%, var(--text));
+}
+
+.ai-modal-actions .secondary:hover {
+  background: color-mix(in srgb, var(--surface-low) 76%, var(--surface-card));
+}
+
+.ai-modal-actions .primary {
+  background: color-mix(in srgb, var(--primary) 88%, var(--surface-low));
+  color: color-mix(in srgb, var(--surface-card) 95%, white);
+}
+
+.ai-modal-actions .primary:hover {
+  filter: brightness(1.04);
 }
 
 @keyframes focusPulse {
