@@ -11,6 +11,7 @@ let boards = loadBoards();
 let activeBoardId = loadActiveBoardId();
 let tasks = loadTasksForBoard(activeBoardId).map(normalizeTask);
 let draggingTaskId = null;
+let dragOverListId = null;
 let editingTaskId = null;
 let deleteConfirmTaskId = null;
 let editingBoardId = null;
@@ -478,7 +479,7 @@ function deleteBoard(boardId) {
 
   if (deletingActive) {
     const fallback = boards[0];
-    switchBoard(fallback.id);
+    switchBoard(fallback.id, { persistCurrentBoard: false });
   } else {
     renderBoardsPanel();
   }
@@ -488,14 +489,18 @@ function deleteBoard(boardId) {
   renderBoardsPanel();
 }
 
-function switchBoard(boardId) {
+function switchBoard(boardId, options = {}) {
+  const { persistCurrentBoard = true } = options;
+
   if (boardId === activeBoardId) {
     updateBoardName();
     renderBoardsPanel();
     return;
   }
 
-  saveTasks();
+  if (persistCurrentBoard) {
+    saveTasks();
+  }
 
   setActiveBoardId(boardId);
   tasks = loadTasksForBoard(boardId).map(normalizeTask);
@@ -881,10 +886,9 @@ function createTaskElement(task) {
 
   card.addEventListener("dragend", () => {
     draggingTaskId = null;
+    dragOverListId = null;
     card.classList.remove("dragging");
-    document.querySelectorAll(".task-list").forEach((list) => {
-      list.classList.remove("drag-over");
-    });
+    clearDropIndicators();
   });
 
   return card;
@@ -929,7 +933,9 @@ function setupDropZones() {
 
     taskList.addEventListener("dragover", (event) => {
       event.preventDefault();
+      dragOverListId = taskList.id;
       taskList.classList.add("drag-over");
+      updateDropIndicator(taskList, event.clientY);
     });
 
     taskList.addEventListener("dragleave", (event) => {
@@ -937,24 +943,66 @@ function setupDropZones() {
       if (related instanceof Node && taskList.contains(related)) {
         return;
       }
+
+      if (dragOverListId === taskList.id) {
+        dragOverListId = null;
+      }
+
       taskList.classList.remove("drag-over");
+      taskList.classList.remove("drop-at-end");
+      taskList.dataset.dropBeforeId = "";
+      clearCardIndicators(taskList);
     });
 
     taskList.addEventListener("drop", (event) => {
       event.preventDefault();
       taskList.classList.remove("drag-over");
+      taskList.classList.remove("drop-at-end");
 
       const draggedId = draggingTaskId || event.dataTransfer?.getData("text/plain");
       if (!draggedId) {
         return;
       }
 
-      const targetCard =
-        event.target instanceof Element ? event.target.closest(".task") : null;
-      const beforeTaskId = targetCard?.dataset.id || null;
+      const beforeTaskId = taskList.dataset.dropBeforeId || null;
 
       moveTaskByDrop(draggedId, column, beforeTaskId);
+      clearDropIndicators();
     });
+  });
+}
+
+function updateDropIndicator(taskList, cursorY) {
+  const cards = Array.from(taskList.querySelectorAll(".task:not(.dragging)"));
+  const nextCard = cards.find((card) => {
+    const rect = card.getBoundingClientRect();
+    return cursorY <= rect.top + rect.height / 2;
+  });
+
+  clearCardIndicators(taskList);
+  taskList.classList.remove("drop-at-end");
+
+  if (nextCard) {
+    nextCard.classList.add("drop-indicator");
+    taskList.dataset.dropBeforeId = nextCard.dataset.id || "";
+    return;
+  }
+
+  taskList.dataset.dropBeforeId = "";
+  taskList.classList.add("drop-at-end");
+}
+
+function clearCardIndicators(taskList) {
+  taskList.querySelectorAll(".task.drop-indicator").forEach((card) => {
+    card.classList.remove("drop-indicator");
+  });
+}
+
+function clearDropIndicators() {
+  document.querySelectorAll(".task-list").forEach((list) => {
+    list.classList.remove("drag-over", "drop-at-end");
+    list.dataset.dropBeforeId = "";
+    clearCardIndicators(list);
   });
 }
 
