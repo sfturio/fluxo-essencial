@@ -92,6 +92,12 @@
         <input id="new-board-input" type="text" placeholder="Nova tabela" maxlength="60" />
         <button id="create-board-btn" type="button">+ Nova tabela</button>
       </div>
+      <div class="boards-backup">
+        <button id="export-backup-btn" type="button">Exportar backup</button>
+        <button id="import-backup-btn" type="button">Importar backup</button>
+        <input id="backup-file-input" type="file" accept="application/json" hidden />
+      </div>
+      <p id="backup-status" class="backup-status" aria-live="polite"></p>
     </aside>
   </div>
 

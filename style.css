@@ -697,6 +697,34 @@ body.focus-mode .column[data-column="inprogress"] h2::after {
   background: color-mix(in srgb, var(--surface-low) 72%, var(--surface-card));
 }
 
+.boards-backup {
+  margin-top: 0.5rem;
+  display: flex;
+  gap: 0.35rem;
+}
+
+.boards-backup button {
+  border: none;
+  border-radius: 9px;
+  background: var(--surface-low);
+  color: color-mix(in srgb, var(--primary) 86%, var(--text));
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 0.4rem 0.5rem;
+  cursor: pointer;
+}
+
+.boards-backup button:hover {
+  background: color-mix(in srgb, var(--surface-low) 72%, var(--surface-card));
+}
+
+.backup-status {
+  min-height: 1.1rem;
+  margin: 0.45rem 0 0;
+  font-size: 0.76rem;
+  color: color-mix(in srgb, var(--text-muted) 84%, var(--text));
+}
+
 .ai-modal {
   width: min(560px, 100%);
   background: color-mix(in srgb, var(--surface-card) 92%, var(--surface-low));

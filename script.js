@@ -29,6 +29,10 @@ const boardsCloseButton = document.getElementById("boards-close");
 const boardsList = document.getElementById("boards-list");
 const newBoardInput = document.getElementById("new-board-input");
 const createBoardButton = document.getElementById("create-board-btn");
+const exportBackupButton = document.getElementById("export-backup-btn");
+const importBackupButton = document.getElementById("import-backup-btn");
+const backupFileInput = document.getElementById("backup-file-input");
+const backupStatus = document.getElementById("backup-status");
 
 const iaGenerateButton = document.getElementById("ia-generate-btn");
 const aiModalOverlay = document.getElementById("ai-modal-overlay");
@@ -55,6 +59,9 @@ boardsCloseButton?.addEventListener("click", closeBoardsPanel);
 boardsOverlay?.addEventListener("click", onBoardsOverlayClick);
 createBoardButton?.addEventListener("click", onCreateBoard);
 newBoardInput?.addEventListener("keydown", onNewBoardInputKeydown);
+exportBackupButton?.addEventListener("click", onExportBackup);
+importBackupButton?.addEventListener("click", onImportBackupClick);
+backupFileInput?.addEventListener("change", onBackupFileSelected);
 
 boardsList?.addEventListener("click", onBoardsListClick);
 boardsList?.addEventListener("keydown", onBoardsListKeydown);
@@ -296,6 +303,160 @@ function onCreateBoard() {
 
   switchBoard(board.id);
   openBoardsPanel();
+}
+
+function onExportBackup() {
+  saveTasks();
+
+  const payload = buildBackupPayload();
+  const content = JSON.stringify(payload, null, 2);
+  const blob = new Blob([content], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+
+  const stamp = new Date()
+    .toISOString()
+    .replaceAll(":", "-")
+    .replaceAll(".", "-");
+  const filename = `fluxo-essencial-backup-${stamp}.json`;
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+
+  setBackupStatus("Backup exportado.");
+}
+
+function onImportBackupClick() {
+  backupFileInput?.click();
+}
+
+async function onBackupFileSelected(event) {
+  const target = event.target;
+  if (!(target instanceof HTMLInputElement)) {
+    return;
+  }
+
+  const file = target.files?.[0];
+  if (!file) {
+    return;
+  }
+
+  try {
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    applyBackupData(parsed);
+    setBackupStatus("Backup importado.");
+  } catch {
+    setBackupStatus("Arquivo inválido.");
+  } finally {
+    target.value = "";
+  }
+}
+
+function buildBackupPayload() {
+  const tasksByBoard = {};
+
+  boards.forEach((board) => {
+    const boardTasks = loadTasksForBoard(board.id).map(normalizeTask);
+    tasksByBoard[board.id] = boardTasks;
+  });
+
+  tasksByBoard[activeBoardId] = tasks.map(normalizeTask);
+
+  return {
+    app: "fluxo-essencial",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    boards,
+    activeBoardId,
+    tasksByBoard,
+    settings: {
+      theme: document.body.classList.contains("dark") ? "dark" : "light",
+      focusMode: document.body.classList.contains("focus-mode") ? "on" : "off",
+    },
+  };
+}
+
+function applyBackupData(data) {
+  const importedBoards = Array.isArray(data?.boards)
+    ? data.boards
+        .map((item) => ({
+          id: String(item?.id || "").trim(),
+          name: String(item?.name || "").trim(),
+        }))
+        .filter((item) => item.id && item.name)
+    : [];
+
+  if (importedBoards.length === 0) {
+    throw new Error("invalid backup");
+  }
+
+  const importedTasksByBoard =
+    data && typeof data.tasksByBoard === "object" && data.tasksByBoard
+      ? data.tasksByBoard
+      : {};
+
+  const nextActiveBoardId = importedBoards.some((board) => board.id === data?.activeBoardId)
+    ? data.activeBoardId
+    : importedBoards[0].id;
+
+  const taskKeysToRemove = [];
+  for (let i = 0; i < localStorage.length; i += 1) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith(TASKS_KEY_PREFIX)) {
+      taskKeysToRemove.push(key);
+    }
+  }
+  taskKeysToRemove.forEach((key) => localStorage.removeItem(key));
+
+  importedBoards.forEach((board) => {
+    const rawTasks = Array.isArray(importedTasksByBoard[board.id])
+      ? importedTasksByBoard[board.id]
+      : [];
+    const normalized = rawTasks.map(normalizeTask);
+    localStorage.setItem(taskStorageKey(board.id), JSON.stringify(normalized));
+  });
+
+  boards = importedBoards;
+  saveBoards();
+  setActiveBoardId(nextActiveBoardId);
+  tasks = loadTasksForBoard(nextActiveBoardId).map(normalizeTask);
+  editingTaskId = null;
+  deleteConfirmTaskId = null;
+  editingBoardId = null;
+  deleteConfirmBoardId = null;
+  clearConfirmColumn = null;
+  updateClearColumnButtons();
+
+  const theme = data?.settings?.theme;
+  if (theme === "dark" || theme === "light") {
+    applyTheme(theme);
+  }
+
+  const focus = data?.settings?.focusMode;
+  if (focus === "on" || focus === "off") {
+    applyFocusMode(focus === "on");
+  }
+
+  updateBoardName();
+  renderBoardsPanel();
+  render();
+}
+
+function setBackupStatus(message) {
+  if (!backupStatus) {
+    return;
+  }
+
+  backupStatus.textContent = message;
+  window.clearTimeout(setBackupStatus.timerId);
+  setBackupStatus.timerId = window.setTimeout(() => {
+    backupStatus.textContent = "";
+  }, 2200);
 }
 
 function onNewBoardInputKeydown(event) {
