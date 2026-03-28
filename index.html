@@ -1,0 +1,40 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simple Kanban</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="app-header">
+      <h1>Kanban Board</h1>
+      <form id="task-form" class="task-form" autocomplete="off">
+        <input id="task-title" name="title" type="text" placeholder="Task title" required maxlength="120" />
+        <input id="task-description" name="description" type="text" placeholder="Description (optional)" maxlength="240" />
+        <button type="submit">Add Task</button>
+      </form>
+    </header>
+
+    <section class="board" aria-label="Kanban board">
+      <article class="column" data-column="todo">
+        <h2>To Do</h2>
+        <div class="task-list" id="todo-list"></div>
+      </article>
+
+      <article class="column" data-column="inprogress">
+        <h2>In Progress</h2>
+        <div class="task-list" id="inprogress-list"></div>
+      </article>
+
+      <article class="column" data-column="done">
+        <h2>Done</h2>
+        <div class="task-list" id="done-list"></div>
+      </article>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
