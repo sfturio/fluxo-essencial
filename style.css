@@ -17,6 +17,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -92,7 +96,7 @@ body.dark .theme-btn:hover {
 
 .task-form {
   display: grid;
-  grid-template-columns: 1fr 260px auto;
+  grid-template-columns: minmax(320px, 1fr) minmax(220px, 300px) auto auto;
   gap: 0.6rem;
   margin-bottom: 1.4rem;
 }
@@ -120,6 +124,7 @@ body.dark .theme-btn:hover {
   font-weight: 600;
   color: var(--primary);
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .task-form button:hover {
@@ -346,6 +351,10 @@ body.focus-mode .column[data-column="inprogress"] h2::after {
   justify-content: center;
   padding: 1rem;
   z-index: 50;
+}
+
+.modal-overlay[hidden] {
+  display: none !important;
 }
 
 .ai-modal {
