@@ -15,6 +15,7 @@ let editingTaskId = null;
 let deleteConfirmTaskId = null;
 let editingBoardId = null;
 let deleteConfirmBoardId = null;
+let clearConfirmColumn = null;
 
 const form = document.getElementById("task-form");
 const titleInput = document.getElementById("task-title");
@@ -39,6 +40,7 @@ const themeToggleButton = document.getElementById("theme-toggle");
 const themeIcon = document.getElementById("theme-icon");
 const focusToggleButton = document.getElementById("focus-toggle");
 const focusLabel = document.getElementById("focus-label");
+const clearColumnButtons = document.querySelectorAll('[data-action="clear-column"]');
 
 form.addEventListener("submit", onCreateTask);
 iaGenerateButton?.addEventListener("click", openAIPlanningModal);
@@ -61,12 +63,16 @@ document.addEventListener("visibilitychange", onVisibilityChange);
 
 themeToggleButton?.addEventListener("click", toggleTheme);
 focusToggleButton?.addEventListener("click", toggleFocusMode);
+clearColumnButtons.forEach((button) => {
+  button.addEventListener("click", onClearColumnClick);
+});
 
 initTheme();
 initFocusMode();
 setupDropZones();
 updateBoardName();
 renderBoardsPanel();
+updateClearColumnButtons();
 render();
 
 function initTheme() {
@@ -527,11 +533,9 @@ function onCreateTask(event) {
 
 function onGenerateIATasks() {
   const text = aiPlanInput?.value.trim() || "";
-  if (!text) {
-    return;
-  }
+  const planText = text || getExamplePlanInput();
 
-  const generatedCount = gerarTasksIA(text);
+  const generatedCount = gerarTasksIA(planText);
   if (generatedCount === 0) {
     return;
   }
@@ -541,6 +545,10 @@ function onGenerateIATasks() {
   }
 
   closeAIPlanningModal();
+}
+
+function getExamplePlanInput() {
+  return "revisar e-mails (manhã) ; treino de peito (academia) ; estudar JavaScript (noite)";
 }
 
 function gerarTasksIA(text) {
@@ -632,6 +640,12 @@ function onGlobalKeydown(event) {
 
   if (boardsOverlay && !boardsOverlay.hidden) {
     closeBoardsPanel();
+    return;
+  }
+
+  if (clearConfirmColumn) {
+    clearConfirmColumn = null;
+    updateClearColumnButtons();
   }
 }
 
@@ -642,6 +656,8 @@ function onVisibilityChange() {
 
   closeAIPlanningModal();
   closeBoardsPanel();
+  clearConfirmColumn = null;
+  updateClearColumnButtons();
 }
 
 function updatePageLock() {
@@ -653,6 +669,51 @@ function updatePageLock() {
 function inferCategory(description) {
   const value = String(description || "").trim();
   return value;
+}
+
+function onClearColumnClick(event) {
+  const target = event.currentTarget;
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+
+  const column = target.dataset.column;
+  if (!COLUMNS.includes(column)) {
+    return;
+  }
+
+  if (clearConfirmColumn === column) {
+    clearConfirmColumn = null;
+    clearColumnTasks(column);
+    updateClearColumnButtons();
+    return;
+  }
+
+  clearConfirmColumn = column;
+  updateClearColumnButtons();
+}
+
+function clearColumnTasks(column) {
+  const previousCount = tasks.length;
+  tasks = tasks.filter((task) => task.status !== column);
+
+  if (tasks.length === previousCount) {
+    return;
+  }
+
+  editingTaskId = null;
+  deleteConfirmTaskId = null;
+  saveTasks();
+  render();
+}
+
+function updateClearColumnButtons() {
+  clearColumnButtons.forEach((button) => {
+    const column = button.dataset.column;
+    const isConfirming = clearConfirmColumn === column;
+    button.classList.toggle("confirming", isConfirming);
+    button.textContent = isConfirming ? "Confirmar" : "Limpar";
+  });
 }
 
 function render() {

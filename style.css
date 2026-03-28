@@ -176,6 +176,13 @@ body.dark .task-form button:hover {
   gap: 0.75rem;
 }
 
+.column-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
 .column h2 {
   margin: 0;
   padding: 0 0.45rem;
@@ -418,6 +425,10 @@ body.focus-mode .column:not([data-column="inprogress"]) {
   display: none;
 }
 
+body.focus-mode .clear-column-btn {
+  display: none;
+}
+
 body.focus-mode .column[data-column="inprogress"] h2::after {
   content: " · foco";
   font-size: 0.72em;
@@ -481,6 +492,28 @@ body.focus-mode .column[data-column="inprogress"] h2::after {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: color-mix(in srgb, var(--text) 75%, transparent);
+}
+
+.clear-column-btn {
+  border: none;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-low) 88%, var(--surface-card));
+  color: color-mix(in srgb, var(--text-muted) 86%, var(--text));
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 0.26rem 0.48rem;
+  cursor: pointer;
+}
+
+.clear-column-btn:hover {
+  background: color-mix(in srgb, var(--surface-low) 75%, var(--surface-card));
+}
+
+.clear-column-btn.confirming {
+  color: #8a5858;
+  background: color-mix(in srgb, var(--surface-low) 78%, var(--surface-card));
 }
 
 .boards-list {

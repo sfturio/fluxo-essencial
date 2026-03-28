@@ -34,17 +34,26 @@
 
     <section class="board" aria-label="Fluxo Essencial">
       <article class="column" data-column="todo">
-        <h2>Próximos</h2>
+        <div class="column-head">
+          <h2>Próximos</h2>
+          <button type="button" class="clear-column-btn" data-action="clear-column" data-column="todo">Limpar</button>
+        </div>
         <div class="task-list" id="todo-list"></div>
       </article>
 
       <article class="column" data-column="inprogress">
-        <h2>Em andamento</h2>
+        <div class="column-head">
+          <h2>Em andamento</h2>
+          <button type="button" class="clear-column-btn" data-action="clear-column" data-column="inprogress">Limpar</button>
+        </div>
         <div class="task-list" id="inprogress-list"></div>
       </article>
 
       <article class="column" data-column="done">
-        <h2>Concluído</h2>
+        <div class="column-head">
+          <h2>Concluído</h2>
+          <button type="button" class="clear-column-btn" data-action="clear-column" data-column="done">Limpar</button>
+        </div>
         <div class="task-list" id="done-list"></div>
       </article>
     </section>
