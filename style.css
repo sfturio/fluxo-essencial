@@ -333,15 +333,14 @@ body.dark .task-list.drag-over {
   margin-top: 0.8rem;
   display: flex;
   gap: 0.35rem;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
+  opacity: 0.88;
+  pointer-events: auto;
+  transition: none;
 }
 
 .task:hover .task-actions,
 .task:focus-within .task-actions {
   opacity: 1;
-  pointer-events: auto;
 }
 
 .task-actions button {
