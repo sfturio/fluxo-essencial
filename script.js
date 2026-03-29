@@ -767,7 +767,7 @@ function getExamplePlanInput() {
   return [
     "!organizar sprint semanal (manhã) @joao #backend #api +2026-04-06",
     "!!revisar fluxo de caixa (financeiro) @ana #financas #urgente +2026-04-07",
-    "!!preparar campanha de leads (marketing) @bia #conteudo #social +2026-04-08",
+    "preparar campanha de leads (marketing) @bia #conteudo #social +2026-04-08",
   ].join("; ");
 }
 
