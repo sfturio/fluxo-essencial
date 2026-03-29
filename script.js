@@ -956,6 +956,8 @@ function updateClearColumnButtons() {
 }
 
 function render() {
+  const focusModeOn = document.body.classList.contains("focus-mode");
+
   COLUMNS.forEach((column) => {
     const list = document.getElementById(`${column}-list`);
     if (!list) {
@@ -964,9 +966,16 @@ function render() {
 
     list.innerHTML = "";
 
-    tasks
-      .filter((task) => task.status === column)
-      .forEach((task) => list.appendChild(createTaskElement(task)));
+    const columnTasks = tasks.filter((task) => task.status === column);
+    const orderedTasks =
+      focusModeOn && column === "inprogress"
+        ? [
+            ...columnTasks.filter((task) => task.priority === "high"),
+            ...columnTasks.filter((task) => task.priority !== "high"),
+          ]
+        : columnTasks;
+
+    orderedTasks.forEach((task) => list.appendChild(createTaskElement(task)));
   });
 }
 
