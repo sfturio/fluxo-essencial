@@ -57,6 +57,19 @@
         <div class="task-list" id="done-list"></div>
       </article>
     </section>
+
+    <section class="help-section" aria-label="Ajuda">
+      <h2>Ajuda rápida</h2>
+      <ul>
+        <li>Separe tarefas com <code>;</code></li>
+        <li>Use <code>!</code> no começo para ir para <strong>Em andamento</strong></li>
+        <li>Use <code>(categoria)</code> para definir a categoria</li>
+        <li>Use <code>@responsavel</code> para responsável</li>
+        <li>Use <code>#tag</code> para tags</li>
+        <li>Use <code>+data</code> para deadline</li>
+      </ul>
+      <p class="help-example">Exemplo: <code>!criar API (manhã) @joao #backend +2026-04-05</code></p>
+    </section>
   </main>
 
   <div class="focus-wrap">
@@ -73,10 +86,10 @@
         <button id="ai-close-btn" type="button" class="icon-close" aria-label="Fechar modal">×</button>
       </div>
       <p>Descreva o que você quer fazer</p>
-      <textarea id="ai-plan-input" rows="7" placeholder="Separe tarefas com ; Ex: revisar e-mails ; treino de peito ; estudar JavaScript. Dica: se usar (), vira categoria. Ex: estudar JavaScript (noite)"></textarea>
+      <textarea id="ai-plan-input" rows="7" placeholder="Separe tarefas com ; Use ! para Em andamento. Ex: !criar API (manhã) @joao #backend +2026-04-05; estudar node (noite)"></textarea>
       <div class="ai-modal-actions">
         <button id="ai-cancel-btn" type="button" class="secondary">Cancelar</button>
-        <button id="ai-generate-confirm-btn" type="button" class="primary">Gerar tarefas</button>
+        <button id="ai-generate-confirm-btn" type="button" class="primary">Adicionar tarefas</button>
       </div>
     </section>
   </div>
