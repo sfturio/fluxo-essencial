@@ -1346,7 +1346,8 @@ body.focus-mode .column[data-focus-main="true"] h2::after {
   background: color-mix(in srgb, var(--surface-low) 76%, var(--surface-card));
 }
 
-.board-actions button[data-action="delete"] {
+.board-actions button[data-action="delete"],
+.board-actions button[data-action="delete-column"] {
   color: #8a5757;
 }
 
