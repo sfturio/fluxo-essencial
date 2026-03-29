@@ -13,6 +13,7 @@ let tasks = loadTasksForBoard(activeBoardId).map(normalizeTask);
 let draggingTaskId = null;
 let dragOverListId = null;
 let editingTaskId = null;
+let modalEditingTaskId = null;
 let deleteConfirmTaskId = null;
 let editingBoardId = null;
 let deleteConfirmBoardId = null;
@@ -43,6 +44,16 @@ const aiPlanInput = document.getElementById("ai-plan-input");
 const aiCancelButton = document.getElementById("ai-cancel-btn");
 const aiGenerateConfirmButton = document.getElementById("ai-generate-confirm-btn");
 const aiCloseButton = document.getElementById("ai-close-btn");
+const taskModalOverlay = document.getElementById("task-modal-overlay");
+const taskModalClose = document.getElementById("task-modal-close");
+const taskModalCancel = document.getElementById("task-modal-cancel");
+const taskModalSave = document.getElementById("task-modal-save");
+const taskEditTitle = document.getElementById("task-edit-title");
+const taskEditCategory = document.getElementById("task-edit-category");
+const taskEditAssignee = document.getElementById("task-edit-assignee");
+const taskEditTags = document.getElementById("task-edit-tags");
+const taskEditDeadline = document.getElementById("task-edit-deadline");
+const taskEditPriority = document.getElementById("task-edit-priority");
 
 const themeToggleButton = document.getElementById("theme-toggle");
 const themeIcon = document.getElementById("theme-icon");
@@ -56,6 +67,10 @@ aiCancelButton?.addEventListener("click", closeAIPlanningModal);
 aiGenerateConfirmButton?.addEventListener("click", onGenerateIATasks);
 aiCloseButton?.addEventListener("click", closeAIPlanningModal);
 aiModalOverlay?.addEventListener("click", onModalOverlayClick);
+taskModalClose?.addEventListener("click", closeTaskModal);
+taskModalCancel?.addEventListener("click", closeTaskModal);
+taskModalSave?.addEventListener("click", saveTaskModal);
+taskModalOverlay?.addEventListener("click", onTaskModalOverlayClick);
 
 boardToggleButton?.addEventListener("click", toggleBoardsPanel);
 boardsCloseButton?.addEventListener("click", closeBoardsPanel);
@@ -812,11 +827,12 @@ function parseTaskItem(rawText) {
     .trim();
 
   const isPriority = priorityCount >= 1;
-  const priority = priorityCount >= 2 ? "high" : isPriority ? "medium" : "normal";
+  const isHighPriority = priorityCount >= 2;
+  const priority = isHighPriority ? "high" : isPriority ? "medium" : "normal";
 
   return {
     title,
-    column: isPriority ? "em_andamento" : "proximos",
+    column: isPriority && !isHighPriority ? "em_andamento" : "proximos",
     category: category && category.length > 0 ? category : null,
     assignee,
     tags,
@@ -860,6 +876,11 @@ function onGlobalKeydown(event) {
     return;
   }
 
+  if (taskModalOverlay && !taskModalOverlay.hidden) {
+    closeTaskModal();
+    return;
+  }
+
   if (helpModalOverlay && !helpModalOverlay.hidden) {
     closeHelpModal();
     return;
@@ -882,6 +903,7 @@ function onVisibilityChange() {
   }
 
   closeAIPlanningModal();
+  closeTaskModal();
   closeHelpModal();
   closeBoardsPanel();
   clearConfirmColumn = null;
@@ -892,7 +914,8 @@ function updatePageLock() {
   const aiOpen = aiModalOverlay && !aiModalOverlay.hidden;
   const boardsOpen = boardsOverlay && !boardsOverlay.hidden;
   const helpOpen = helpModalOverlay && !helpModalOverlay.hidden;
-  document.body.style.overflow = aiOpen || boardsOpen || helpOpen ? "hidden" : "";
+  const taskOpen = taskModalOverlay && !taskModalOverlay.hidden;
+  document.body.style.overflow = aiOpen || boardsOpen || helpOpen || taskOpen ? "hidden" : "";
 }
 
 function toggleHelpSection() {
@@ -1191,6 +1214,10 @@ function createTaskElement(task) {
     clearDropIndicators();
   });
 
+  card.addEventListener("dblclick", () => {
+    openTaskModal(task.id);
+  });
+
   return card;
 }
 
@@ -1230,6 +1257,89 @@ function closeAllTaskDeleteConfirms() {
   document.querySelectorAll(".task-delete-confirm.show").forEach((element) => {
     element.classList.remove("show");
   });
+}
+
+function openTaskModal(taskId) {
+  if (!taskModalOverlay) {
+    return;
+  }
+
+  const task = tasks.find((item) => item.id === taskId);
+  if (!task) {
+    return;
+  }
+
+  modalEditingTaskId = taskId;
+  if (taskEditTitle) {
+    taskEditTitle.value = task.title || "";
+  }
+  if (taskEditCategory) {
+    taskEditCategory.value = task.category || "";
+  }
+  if (taskEditAssignee) {
+    taskEditAssignee.value = task.assignee || "";
+  }
+  if (taskEditTags) {
+    taskEditTags.value = Array.isArray(task.tags) ? task.tags.join(", ") : "";
+  }
+  if (taskEditDeadline) {
+    taskEditDeadline.value = task.deadline || "";
+  }
+  if (taskEditPriority) {
+    taskEditPriority.value = task.priority || "normal";
+  }
+
+  taskModalOverlay.hidden = false;
+  updatePageLock();
+  taskEditTitle?.focus();
+}
+
+function closeTaskModal() {
+  if (!taskModalOverlay) {
+    return;
+  }
+
+  taskModalOverlay.hidden = true;
+  modalEditingTaskId = null;
+  updatePageLock();
+}
+
+function onTaskModalOverlayClick(event) {
+  if (event.target === taskModalOverlay) {
+    closeTaskModal();
+  }
+}
+
+function saveTaskModal() {
+  if (!modalEditingTaskId) {
+    return;
+  }
+
+  const task = tasks.find((item) => item.id === modalEditingTaskId);
+  if (!task) {
+    return;
+  }
+
+  const nextTitle = taskEditTitle?.value.trim() || "";
+  if (!nextTitle) {
+    taskEditTitle?.focus();
+    return;
+  }
+
+  task.title = nextTitle;
+  task.category = (taskEditCategory?.value || "").trim() || null;
+  task.assignee = (taskEditAssignee?.value || "").trim() || null;
+  const tags = (taskEditTags?.value || "")
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter((tag) => tag.length > 0);
+  task.tags = tags;
+  task.deadline = (taskEditDeadline?.value || "").trim() || null;
+  task.priority = taskEditPriority?.value || "normal";
+
+  saveTasks();
+  render();
+  closeTaskModal();
 }
 
 function setupDropZones() {
