@@ -15,7 +15,7 @@
     <header class="topbar">
       <div>
         <h1>Fluxo Essencial</h1>
-        <p class="subtitle">Foco e fluxo diário · <span id="board-name">Principal</span></p>
+        <p class="subtitle">Foco e fluxo diario &middot; <span id="board-name">Principal</span></p>
         <p id="auth-status" class="auth-status">Convidado</p>
       </div>
       <div class="header-actions">
@@ -42,7 +42,7 @@
     <section class="board" aria-label="Fluxo Essencial">
       <article class="column" data-column="todo">
         <div class="column-head">
-          <h2>Próximos</h2>
+          <h2>Proximos</h2>
           <button type="button" class="clear-column-btn" data-action="clear-column" data-column="todo">Limpar</button>
         </div>
         <div class="task-list" id="todo-list"></div>
@@ -58,7 +58,7 @@
 
       <article class="column" data-column="done">
         <div class="column-head">
-          <h2>Concluído</h2>
+          <h2>Concluido</h2>
           <button type="button" class="clear-column-btn" data-action="clear-column" data-column="done">Limpar</button>
         </div>
         <div class="task-list" id="done-list"></div>
@@ -77,9 +77,9 @@
     <section class="ai-modal" role="dialog" aria-modal="true" aria-labelledby="ai-modal-title">
       <div class="ai-modal-head">
         <h2 id="ai-modal-title">Planejar com IA</h2>
-        <button id="ai-close-btn" type="button" class="icon-close" aria-label="Fechar modal">×</button>
+        <button id="ai-close-btn" type="button" class="icon-close" aria-label="Fechar modal">&times;</button>
       </div>
-      <p>Descreva o que você quer fazer</p>
+      <p>Descreva o que voce quer fazer</p>
       <textarea id="ai-plan-input" rows="7" placeholder="Separe tarefas com ; Ex: revisar e-mails ; treino de peito ; estudar JavaScript. Dica: se usar (), vira categoria. Ex: estudar JavaScript (noite)"></textarea>
       <div class="ai-modal-actions">
         <button id="ai-cancel-btn" type="button" class="secondary">Cancelar</button>
@@ -92,7 +92,7 @@
     <aside class="boards-panel" role="dialog" aria-modal="true" aria-labelledby="boards-title">
       <div class="boards-head">
         <h2 id="boards-title">Tabelas</h2>
-        <button id="boards-close" type="button" class="icon-close" aria-label="Fechar tabelas">×</button>
+        <button id="boards-close" type="button" class="icon-close" aria-label="Fechar tabelas">&times;</button>
       </div>
       <div id="boards-list" class="boards-list"></div>
       <div class="boards-create">
@@ -106,7 +106,7 @@
     <section class="ai-modal auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
       <div class="ai-modal-head">
         <h2 id="auth-modal-title">Entrar</h2>
-        <button id="auth-close-btn" type="button" class="icon-close" aria-label="Fechar modal">×</button>
+        <button id="auth-close-btn" type="button" class="icon-close" aria-label="Fechar modal">&times;</button>
       </div>
       <p id="auth-modal-subtitle">Acesse sua conta para sincronizar suas tarefas.</p>
       <form id="auth-form" class="auth-form" autocomplete="off">
@@ -119,7 +119,7 @@
           <input id="auth-password" name="password" type="password" required minlength="6" />
         </label>
         <div class="auth-toggle">
-          <span id="auth-toggle-text">Ainda não tem conta?</span>
+          <span id="auth-toggle-text">Ainda nao tem conta?</span>
           <button id="auth-mode-btn" type="button">Criar conta</button>
         </div>
         <div class="ai-modal-actions">
