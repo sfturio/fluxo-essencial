@@ -743,8 +743,13 @@ function onCreateTask(event) {
 }
 
 function onGenerateIATasks() {
-  const text = aiPlanInput?.value.trim() || "";
-  const planText = text || getExamplePlanInput();
+  const text = normalizeSpaces(aiPlanInput?.value || "");
+  const shouldUseExamples = text.length === 0 && tasks.length === 0;
+  const planText = shouldUseExamples ? getExamplePlanInput() : text;
+
+  if (!planText) {
+    return;
+  }
 
   const generatedCount = gerarTasksIA(planText);
   if (generatedCount === 0) {
@@ -759,7 +764,11 @@ function onGenerateIATasks() {
 }
 
 function getExamplePlanInput() {
-  return "revisar e-mails (manhã) ; treino de peito (academia) ; estudar JavaScript (noite)";
+  return [
+    "!organizar sprint semanal (manhã) @joao #backend #api +2026-04-06",
+    "!!revisar fluxo de caixa (financeiro) @ana #financas #urgente +2026-04-07",
+    "!!preparar campanha de leads (marketing) @bia #conteudo #social +2026-04-08",
+  ].join("; ");
 }
 
 function gerarTasksIA(text) {
@@ -780,7 +789,7 @@ function gerarTasksIA(text) {
 function parseTasks(input) {
   const rawItems = String(input || "")
     .split(";")
-    .map((item) => item.trim())
+    .map((item) => normalizeSpaces(item))
     .filter((item) => item.length > 0);
 
   return rawItems
@@ -801,7 +810,7 @@ function parseTasks(input) {
 }
 
 function parseTaskItem(rawText) {
-  const trimmed = String(rawText || "").trim();
+  const trimmed = normalizeSpaces(rawText);
   if (!trimmed) {
     return {
       title: "",
@@ -815,42 +824,44 @@ function parseTaskItem(rawText) {
     };
   }
 
-  const importantMatch = trimmed.match(/^importante[:\s]+/i);
   const priorityMatch = trimmed.match(/^!+/);
   const priorityCount = priorityMatch ? priorityMatch[0].length : 0;
   let withoutPriority = trimmed.replace(/^!+/, "").trim();
-  if (importantMatch) {
-    withoutPriority = withoutPriority.replace(/^importante[:\s]+/i, "").trim();
+
+  let category = null;
+  let baseText = withoutPriority;
+  const categoryMatch = baseText.match(/\(([^)]+)\)/);
+  if (categoryMatch) {
+    category = categoryMatch[1].trim();
+    baseText = baseText
+      .replace(categoryMatch[0], " ")
+      .replace(/\s{2,}/g, " ")
+      .trim();
   }
 
-  const categoryMatch = withoutPriority.match(/^(.*)\(([^)]+)\)\s*$/);
-  const baseText = categoryMatch ? categoryMatch[1].trim() : withoutPriority;
-  const category = categoryMatch ? categoryMatch[2].trim() : null;
-
-  const assigneeMatch = baseText.match(/@([^\s#\+]+)/);
+  const assigneeMatch = baseText.match(/@\s*([^\s#\+]+)/);
   const assignee = assigneeMatch ? assigneeMatch[1].trim() : null;
 
   const tags = [];
-  const tagMatches = baseText.match(/#([^\s@+\#]+)/g) || [];
+  const tagMatches = baseText.match(/#\s*([^\s@+\#]+)/g) || [];
   tagMatches.forEach((match) => {
-    const value = match.slice(1).trim();
+    const value = normalizeSpaces(match.slice(1));
     if (value && !tags.includes(value)) {
       tags.push(value);
     }
   });
 
-  const deadlineMatch = baseText.match(/\+([^\s@#\+]+)/);
+  const deadlineMatch = baseText.match(/\+\s*([^\s@#\+]+)/);
   const deadline = deadlineMatch ? deadlineMatch[1].trim() : null;
 
   let title = baseText
-    .replace(/@([^\s#\+]+)/g, "")
-    .replace(/#([^\s@+\#]+)/g, "")
-    .replace(/\+([^\s@#\+]+)/g, "")
-    .replace(/\s{2,}/g, " ")
-    .trim();
+    .replace(/@\s*([^\s#\+]+)/g, "")
+    .replace(/#\s*([^\s@+\#]+)/g, "")
+    .replace(/\+\s*([^\s@#\+]+)/g, "");
+  title = normalizeSpaces(title);
 
   const isPriority = priorityCount >= 1;
-  const isHighPriority = priorityCount >= 2 || Boolean(importantMatch);
+  const isHighPriority = priorityCount >= 2;
   const priority = isHighPriority ? "high" : "normal";
 
   return {
@@ -863,6 +874,10 @@ function parseTaskItem(rawText) {
     priority,
     createdAt: new Date(),
   };
+}
+
+function normalizeSpaces(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
 }
 
 function openAIPlanningModal() {
@@ -1104,11 +1119,51 @@ function createTaskElement(task) {
       </button>
     `;
 
+    const meta = document.createElement("div");
+    meta.className = "task-meta";
+    let hasMeta = false;
+
     if (task.category) {
       const category = document.createElement("span");
-      category.className = "task-category";
+      category.className = "task-chip task-category";
       category.textContent = task.category;
-      main.appendChild(category);
+      meta.appendChild(category);
+      hasMeta = true;
+    }
+
+    if (task.assignee) {
+      const assignee = document.createElement("span");
+      assignee.className = "task-chip task-assignee";
+      assignee.textContent = `@${task.assignee}`;
+      meta.appendChild(assignee);
+      hasMeta = true;
+    }
+
+    if (Array.isArray(task.tags) && task.tags.length > 0) {
+      task.tags.forEach((tag) => {
+        const normalizedTag = normalizeSpaces(tag);
+        if (!normalizedTag) {
+          return;
+        }
+
+        const tagElement = document.createElement("span");
+        tagElement.className = "task-chip task-tag";
+        tagElement.textContent = `#${normalizedTag}`;
+        meta.appendChild(tagElement);
+        hasMeta = true;
+      });
+    }
+
+    if (task.deadline) {
+      const deadline = document.createElement("span");
+      deadline.className = "task-chip task-deadline";
+      deadline.textContent = task.deadline;
+      meta.appendChild(deadline);
+      hasMeta = true;
+    }
+
+    if (hasMeta) {
+      main.appendChild(meta);
     }
   }
 
