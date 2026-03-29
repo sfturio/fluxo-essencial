@@ -6,8 +6,8 @@
   --surface-hover: #272c35;
   --text: #edf2fb;
   --text-muted: #a2adbe;
-  --chip-bg: rgba(110, 154, 227, 0.2);
-  --primary: #78a6ea;
+  --chip-bg: rgba(188, 193, 201, 0.2);
+  --primary: #c8ced8;
   --line-soft: rgba(137, 154, 184, 0.34);
   --focus-chip-bg: rgba(22, 27, 36, 0.92);
   --focus-chip-border: rgba(128, 147, 176, 0.34);
@@ -42,8 +42,8 @@ body.dark {
   --surface-hover: #272c35;
   --text: #e8edf5;
   --text-muted: #a0adbf;
-  --chip-bg: rgba(110, 154, 227, 0.2);
-  --primary: #7da8ea;
+  --chip-bg: rgba(188, 193, 201, 0.2);
+  --primary: #c8ced8;
   --line-soft: rgba(133, 151, 179, 0.34);
   --focus-chip-bg: rgba(22, 27, 36, 0.92);
   --focus-chip-border: rgba(133, 151, 179, 0.3);
@@ -300,12 +300,12 @@ h1 {
 }
 
 .column[data-column="inprogress"] h2 {
-  color: color-mix(in srgb, #9dc1ff 86%, var(--text));
+  color: color-mix(in srgb, #dde3ec 84%, var(--text));
 }
 
 .column[data-column="inprogress"] {
-  border-color: color-mix(in srgb, #79a4ee 58%, transparent);
-  box-shadow: 0 12px 28px rgba(23, 42, 74, 0.32);
+  border-color: color-mix(in srgb, #8c95a3 52%, transparent);
+  box-shadow: 0 12px 28px rgba(15, 18, 24, 0.32);
 }
 
 .column[data-column="done"] h2 {
