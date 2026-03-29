@@ -247,7 +247,7 @@ function normalizeTask(task) {
     category: normalizeCategory(task.category, task.description),
     assignee: typeof task.assignee === "string" ? task.assignee.trim() : null,
     tags: Array.isArray(task.tags) ? task.tags.filter(Boolean) : [],
-    deadline: typeof task.deadline === "string" ? task.deadline.trim() : null,
+    deadline: normalizeDeadline(task.deadline),
     status: COLUMNS.includes(task.status) ? task.status : "todo",
     priority: task.priority === "high" ? "high" : "normal",
     createdAt: task.createdAt ? new Date(task.createdAt) : new Date(),
@@ -859,7 +859,7 @@ function parseTaskItem(rawText) {
   });
 
   const deadlineMatch = baseText.match(/\+\s*([^\s@#\+]+)/);
-  const deadline = deadlineMatch ? deadlineMatch[1].trim() : null;
+  const deadline = deadlineMatch ? normalizeDeadline(deadlineMatch[1]) : null;
 
   let title = baseText
     .replace(/@\s*([^\s#\+]+)/g, "")
@@ -885,6 +885,94 @@ function parseTaskItem(rawText) {
 
 function normalizeSpaces(value) {
   return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function normalizeDeadline(value) {
+  const raw = normalizeSpaces(value);
+  if (!raw) {
+    return null;
+  }
+
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length === 8) {
+    if (/^\d{4}/.test(digits)) {
+      const maybeYear = Number(digits.slice(0, 4));
+      const maybeMonth = Number(digits.slice(4, 6));
+      const maybeDay = Number(digits.slice(6, 8));
+      if (isValidDateParts(maybeDay, maybeMonth, maybeYear)) {
+        return formatDateParts(maybeDay, maybeMonth, maybeYear);
+      }
+    }
+
+    const day = Number(digits.slice(0, 2));
+    const month = Number(digits.slice(2, 4));
+    const year = Number(digits.slice(4, 8));
+    if (isValidDateParts(day, month, year)) {
+      return formatDateParts(day, month, year);
+    }
+  }
+
+  if (digits.length === 6) {
+    const day = Number(digits.slice(0, 2));
+    const month = Number(digits.slice(2, 4));
+    const shortYear = Number(digits.slice(4, 6));
+    const year = shortYear >= 70 ? 1900 + shortYear : 2000 + shortYear;
+    if (isValidDateParts(day, month, year)) {
+      return formatDateParts(day, month, year);
+    }
+  }
+
+  const parts = raw
+    .split(/[^0-9]+/)
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
+
+  if (parts.length >= 3) {
+    const [first, second, third] = parts;
+    if (/^\d+$/.test(first) && /^\d+$/.test(second) && /^\d+$/.test(third)) {
+      let day = Number(first);
+      let month = Number(second);
+      let year = Number(third);
+
+      if (first.length === 4) {
+        year = Number(first);
+        month = Number(second);
+        day = Number(third);
+      } else if (third.length === 2) {
+        const shortYear = Number(third);
+        year = shortYear >= 70 ? 1900 + shortYear : 2000 + shortYear;
+      }
+
+      if (isValidDateParts(day, month, year)) {
+        return formatDateParts(day, month, year);
+      }
+    }
+  }
+
+  return raw;
+}
+
+function isValidDateParts(day, month, year) {
+  if (!Number.isInteger(day) || !Number.isInteger(month) || !Number.isInteger(year)) {
+    return false;
+  }
+  if (year < 1000 || year > 9999 || month < 1 || month > 12 || day < 1) {
+    return false;
+  }
+
+  const date = new Date(year, month - 1, day);
+  return (
+    date.getFullYear() === year &&
+    date.getMonth() === month - 1 &&
+    date.getDate() === day
+  );
+}
+
+function formatDateParts(day, month, year) {
+  const dayText = String(day).padStart(2, "0");
+  const monthText = String(month).padStart(2, "0");
+  const yearText = String(year).padStart(4, "0");
+  return `${dayText}-${monthText}-${yearText}`;
 }
 
 function openAIPlanningModal() {
@@ -1499,7 +1587,7 @@ function saveTaskModal() {
     .map((tag) => tag.trim())
     .filter((tag) => tag.length > 0);
   task.tags = tags;
-  task.deadline = (taskEditDeadline?.value || "").trim() || null;
+  task.deadline = normalizeDeadline(taskEditDeadline?.value || "");
   task.priority = taskEditPriority?.value || "normal";
 
   saveTasks();
