@@ -22,7 +22,7 @@ import {
 } from "./storage/local.storage.js";
 import {
   loadBoards,
-  saveBoards,
+  saveBoards as persistBoards,
   loadActiveBoardId,
   saveActiveBoardId,
   createBoard,
@@ -31,20 +31,18 @@ import {
 } from "./services/board.service.js";
 import {
   normalizeTaskForColumns,
-  normalizeTasksForColumns,
   moveTask,
   moveTaskByDrop,
 } from "./services/task.service.js";
 import { gerarTasksIA } from "./services/planner.service.js";
 import { parseTasks } from "./utils/parser.js";
-import { normalizeSpaces, uid } from "./utils/helpers.js";
+import { isUuid, normalizeSpaces, uid } from "./utils/helpers.js";
 import { getDom } from "./ui/dom.js";
 import {
   updateBoardName,
   renderBoardsPanel,
   renderColumnsPanel,
   renderBoardColumns,
-  updateColumnTaskScrollLimits,
 } from "./ui/board.render.js";
 import {
   updatePageLock,
@@ -62,13 +60,27 @@ import { initTheme, toggleTheme, applyTheme } from "./features/theme.service.js"
 import { initFocusMode, toggleFocusMode, applyFocusMode } from "./features/focus.service.js";
 import { setupDropZones, clearDropIndicators } from "./features/dragdrop.service.js";
 import { buildBackupPayload, applyBackupData } from "./features/backup.service.js";
+import {
+  initAuthSession,
+  signInWithPassword,
+  signUpWithPassword,
+  signOut,
+  isLoggedIn,
+  getCurrentUser,
+  pullCloudSnapshot,
+  pushCloudSnapshot,
+  deserializeTaskMeta,
+} from "./features/supabase.service.js";
 
 const state = getAppState();
 const dom = getDom();
+let authMode = "signin";
+let cloudSyncTimer = null;
+let isApplyingCloudSnapshot = false;
 
 boot();
 
-function boot() {
+async function boot() {
   state.boards = loadBoards();
   state.activeBoardId = loadActiveBoardId(state.boards);
   state.tasks = loadTasksForBoard(state.activeBoardId).map((task) => normalizeTask(task));
@@ -77,6 +89,7 @@ function boot() {
   initTheme(dom);
   initFocusMode(dom);
   seedInitialSampleTasks();
+  await initAuth();
 
   render();
 }
@@ -105,6 +118,16 @@ function bindEvents() {
     if (event.target === dom.helpModalOverlay) closeHelpModal(dom);
   });
   dom.helpExportPromptButton?.addEventListener("click", onCopyPromptTemplate);
+
+  dom.authToggleButton?.addEventListener("click", onAuthToggleClick);
+  dom.authCloseButton?.addEventListener("click", closeAuthModal);
+  dom.authCancelButton?.addEventListener("click", closeAuthModal);
+  dom.authModeButton?.addEventListener("click", toggleAuthMode);
+  dom.authForm?.addEventListener("submit", onAuthSubmit);
+  dom.authSubmitButton?.addEventListener("click", onAuthSubmit);
+  dom.authModalOverlay?.addEventListener("click", (event) => {
+    if (event.target === dom.authModalOverlay) closeAuthModal();
+  });
 
   dom.settingsToggleButton?.addEventListener("click", (event) => toggleSettingsMenu(dom, event));
   dom.boardToggleButton?.addEventListener("click", () => toggleBoardsPanel("tables"));
@@ -171,10 +194,443 @@ function loadTasksForBoard(boardId) {
 
 function saveTasks() {
   writeJson(taskStorageKey(state.activeBoardId), state.tasks);
+  scheduleCloudSync();
+}
+
+function saveBoards() {
+  persistBoards(state.boards);
+  scheduleCloudSync();
 }
 
 function normalizeTask(task) {
   return normalizeTaskForColumns(task, getActiveColumns());
+}
+
+async function initAuth() {
+  if (!dom.authToggleButton) {
+    return;
+  }
+
+  try {
+    await initAuthSession({
+      onAuthChange: async (user) => {
+        await handleAuthState(user);
+      },
+    });
+  } catch {
+    dom.authToggleButton.disabled = true;
+    dom.authToggleButton.textContent = "Entrar";
+    dom.authToggleButton.title = "Autenticação indisponível";
+    setAuthStatus("Convidado");
+  }
+}
+
+function setAuthStatus(text) {
+  if (dom.authStatus) {
+    dom.authStatus.textContent = text || "Convidado";
+  }
+}
+
+async function handleAuthState(user) {
+  if (dom.authToggleButton) {
+    dom.authToggleButton.textContent = user ? "Sair" : "Entrar";
+  }
+  setAuthStatus(user?.email || "Convidado");
+
+  if (!user) {
+    return;
+  }
+
+  const pulled = await pullCloudToLocal();
+  if (!pulled) {
+    await syncAllToCloud();
+  }
+}
+
+function onAuthToggleClick() {
+  if (getCurrentUser()) {
+    signOut();
+    return;
+  }
+
+  openAuthModal();
+}
+
+function openAuthModal() {
+  if (!dom.authModalOverlay) {
+    return;
+  }
+
+  updateAuthModal();
+  dom.authModalOverlay.hidden = false;
+  updatePageLock(dom);
+  dom.authEmailInput?.focus();
+}
+
+function closeAuthModal() {
+  dom.authModalOverlay.hidden = true;
+  if (dom.authError) {
+    dom.authError.textContent = "";
+  }
+  updatePageLock(dom);
+}
+
+function toggleAuthMode() {
+  authMode = authMode === "signin" ? "signup" : "signin";
+  updateAuthModal();
+}
+
+function updateAuthModal() {
+  if (
+    !dom.authModalTitle ||
+    !dom.authModalSubtitle ||
+    !dom.authModeButton ||
+    !dom.authToggleText ||
+    !dom.authSubmitButton
+  ) {
+    return;
+  }
+
+  const isSignup = authMode === "signup";
+  dom.authModalTitle.textContent = isSignup ? "Criar conta" : "Entrar";
+  dom.authModalSubtitle.textContent = isSignup
+    ? "Crie sua conta para sincronizar suas tarefas."
+    : "Acesse sua conta para sincronizar suas tarefas.";
+  dom.authToggleText.textContent = isSignup ? "Já tem conta?" : "Ainda não tem conta?";
+  dom.authModeButton.textContent = isSignup ? "Entrar" : "Criar conta";
+  dom.authSubmitButton.textContent = isSignup ? "Criar conta" : "Entrar";
+}
+
+async function onAuthSubmit(event) {
+  event?.preventDefault();
+
+  const email = normalizeSpaces(dom.authEmailInput?.value || "");
+  const password = (dom.authPasswordInput?.value || "").trim();
+  if (!email || !password) {
+    return;
+  }
+
+  if (dom.authError) {
+    dom.authError.textContent = "";
+  }
+
+  const result = authMode === "signup"
+    ? await signUpWithPassword(email, password)
+    : await signInWithPassword(email, password);
+
+  if (result.error) {
+    if (dom.authError) {
+      dom.authError.textContent = result.error.message;
+    }
+    return;
+  }
+
+  closeAuthModal();
+}
+
+async function pullCloudToLocal() {
+  if (!isLoggedIn()) {
+    return false;
+  }
+
+  try {
+    const snapshot = await pullCloudSnapshot();
+    if (!snapshot || snapshot.boards.length === 0) {
+      return false;
+    }
+
+    const previousBoardIds = state.boards.map((board) => board.id);
+    const localById = new Map(state.boards.map((board) => [board.id, board]));
+    const cloudColumnsByBoard = new Map();
+    (snapshot.columns || []).forEach((column) => {
+      const boardId = String(column.board_id || "").trim();
+      if (!boardId) return;
+      if (!cloudColumnsByBoard.has(boardId)) {
+        cloudColumnsByBoard.set(boardId, []);
+      }
+      cloudColumnsByBoard.get(boardId).push(column);
+    });
+
+    const cloudBoards = snapshot.boards
+      .map((board) => {
+        const boardId = String(board.id || "").trim();
+        const localMatch = localById.get(boardId);
+        const cols = buildLocalColumnsFromCloud({
+          cloudColumns: cloudColumnsByBoard.get(boardId) || [],
+          localColumns: localMatch?.columns || [],
+        });
+        return {
+          id: boardId,
+          name: String(board.name || "").trim(),
+          columns: cols.length > 0 ? cols : normalizeBoardColumns(localMatch?.columns),
+        };
+      })
+      .filter((board) => board.id && board.name);
+
+    if (cloudBoards.length === 0) {
+      return false;
+    }
+
+    const fallbackBoardId = cloudBoards[0].id;
+    const tasksByBoard = new Map(cloudBoards.map((board) => [board.id, []]));
+    const tagsByTask = new Map();
+    const commentsByTask = new Map();
+
+    (snapshot.taskTags || []).forEach((row) => {
+      const taskId = String(row.task_id || "").trim();
+      const tag = normalizeSpaces(row.tag || "");
+      if (!taskId || !tag) return;
+      if (!tagsByTask.has(taskId)) {
+        tagsByTask.set(taskId, []);
+      }
+      tagsByTask.get(taskId).push(tag);
+    });
+
+    (snapshot.comments || []).forEach((row) => {
+      const taskId = String(row.task_id || "").trim();
+      const content = normalizeSpaces(row.content || "");
+      if (!taskId || !content) return;
+      if (!commentsByTask.has(taskId)) {
+        commentsByTask.set(taskId, []);
+      }
+      commentsByTask.get(taskId).push({
+        id: row.id || uid(),
+        text: content,
+        createdAt: row.created_at || new Date(),
+      });
+    });
+
+    snapshot.tasks.forEach((row) => {
+      const meta = deserializeTaskMeta(row.description);
+      const rowBoardId = String(row.board_id || "");
+      const boardId = tasksByBoard.has(rowBoardId) ? rowBoardId : fallbackBoardId;
+      const board = cloudBoards.find((item) => item.id === boardId);
+      const boardColumns = board?.columns || getActiveColumns();
+      const statusFromColumnId = resolveLocalColumnIdByCloudId(boardColumns, row.column_id);
+
+      tasksByBoard.get(boardId).push(
+        normalizeTaskForColumns(
+          {
+            id: row.id,
+            title: row.title,
+            description: meta.description,
+            category: row.category || "",
+            assignee: row.assignee || meta.assignee,
+            tags: tagsByTask.get(String(row.id || "")) || meta.tags,
+            comments: commentsByTask.get(String(row.id || "")) || meta.comments,
+            deadline: row.deadline || meta.deadline,
+            completedAt: row.completed_at || meta.completedAt,
+            priority: row.priority || meta.priority,
+            status: statusFromColumnId || row.status || boardColumns[0]?.id || getPrimaryColumnId(),
+            createdAt: row.created_at || new Date(),
+          },
+          boardColumns,
+        ),
+      );
+    });
+
+    isApplyingCloudSnapshot = true;
+    state.boards = cloudBoards;
+    saveBoards();
+
+    previousBoardIds.forEach((boardId) => {
+      if (!state.boards.some((board) => board.id === boardId)) {
+        localStorage.removeItem(taskStorageKey(boardId));
+      }
+    });
+
+    state.boards.forEach((board) => {
+      writeJson(taskStorageKey(board.id), tasksByBoard.get(board.id) || []);
+    });
+
+    const previousActiveId = String(state.activeBoardId || "").trim();
+    state.activeBoardId = state.boards.some((board) => board.id === previousActiveId)
+      ? previousActiveId
+      : state.boards[0].id;
+    saveActiveBoardId(state.activeBoardId);
+
+    state.tasks = loadTasksForBoard(state.activeBoardId).map((task) => normalizeTask(task));
+    resetTaskTransientState();
+    state.clearConfirmColumn = null;
+    render();
+    isApplyingCloudSnapshot = false;
+    return true;
+  } catch (error) {
+    console.error("Erro ao carregar snapshot da nuvem:", error);
+    isApplyingCloudSnapshot = false;
+    return false;
+  }
+}
+
+function getAllLocalTasksForCloud() {
+  const tasks = [];
+  const taskTags = [];
+  const comments = [];
+  const columns = [];
+
+  state.boards.forEach((board) => {
+    const normalizedColumns = normalizeBoardColumns(board.columns).map((column, index) => ({
+      ...column,
+      cloudId: isUuid(column.cloudId) ? column.cloudId : uid(),
+      position: index,
+    }));
+    board.columns = normalizedColumns;
+
+    normalizedColumns.forEach((column) => {
+      columns.push({
+        id: column.cloudId,
+        board_id: board.id,
+        name: column.name,
+        position: column.position,
+      });
+    });
+
+    const boardTasks = loadTasksForBoard(board.id).map((task) =>
+      normalizeTaskForColumns(task, normalizedColumns),
+    );
+
+    boardTasks.forEach((task, index) => {
+      const mappedColumn = normalizedColumns.find((col) => col.id === task.status);
+      const cloudColumnId = mappedColumn?.cloudId || normalizedColumns[0]?.cloudId || null;
+
+      tasks.push({
+        id: task.id,
+        boardId: board.id,
+        columnId: cloudColumnId,
+        title: task.title,
+        description: task.description || "",
+        category: task.category || "",
+        assignee: task.assignee || null,
+        priority: task.priority || "normal",
+        deadline: task.deadline || null,
+        completedAt: task.completedAt || null,
+        position: index,
+        status: task.status,
+        createdAt:
+          task.createdAt instanceof Date
+            ? task.createdAt.toISOString()
+            : new Date(task.createdAt || Date.now()).toISOString(),
+      });
+
+      (task.tags || []).forEach((tag) => {
+        const normalizedTag = normalizeSpaces(tag);
+        if (!normalizedTag) return;
+        taskTags.push({
+          id: uid(),
+          task_id: task.id,
+          tag: normalizedTag,
+        });
+      });
+
+      (task.comments || []).forEach((comment) => {
+        const text = normalizeSpaces(comment?.text || "");
+        if (!text) return;
+        comments.push({
+          id: comment.id || uid(),
+          task_id: task.id,
+          content: text,
+          created_at:
+            comment.createdAt instanceof Date
+              ? comment.createdAt.toISOString()
+              : new Date(comment.createdAt || Date.now()).toISOString(),
+        });
+      });
+    });
+  });
+
+  return { tasks, taskTags, comments, columns };
+}
+
+function scheduleCloudSync() {
+  if (!isLoggedIn() || isApplyingCloudSnapshot) {
+    return;
+  }
+
+  if (cloudSyncTimer) {
+    clearTimeout(cloudSyncTimer);
+  }
+
+  cloudSyncTimer = setTimeout(() => {
+    cloudSyncTimer = null;
+    syncAllToCloud().catch((error) => {
+      console.error("Erro ao sincronizar com a nuvem:", error);
+    });
+  }, 350);
+}
+
+async function syncAllToCloud() {
+  if (!isLoggedIn() || isApplyingCloudSnapshot) {
+    return;
+  }
+
+  const boards = state.boards.map((board) => ({ id: board.id, name: board.name }));
+  const { tasks, taskTags, comments, columns } = getAllLocalTasksForCloud();
+  await pushCloudSnapshot({ boards, columns, tasks, taskTags, comments });
+}
+
+function buildLocalColumnsFromCloud({ cloudColumns, localColumns }) {
+  const localByCloudId = new Map(
+    (localColumns || [])
+      .filter((column) => isUuid(column.cloudId))
+      .map((column) => [column.cloudId, column]),
+  );
+
+  const usedLocalIds = new Set((localColumns || []).map((column) => column.id));
+  const sorted = [...cloudColumns].sort((a, b) => (a.position || 0) - (b.position || 0));
+  return sorted.map((cloudColumn) => {
+    const cloudId = String(cloudColumn.id || "");
+    const name = normalizeSpaces(cloudColumn.name || "Coluna");
+    const existing = localByCloudId.get(cloudId);
+    if (existing) {
+      return {
+        id: existing.id,
+        name,
+        cloudId,
+      };
+    }
+
+    const localId = makeColumnLocalId(name, usedLocalIds);
+    usedLocalIds.add(localId);
+    return {
+      id: localId,
+      name,
+      cloudId,
+    };
+  });
+}
+
+function resolveLocalColumnIdByCloudId(columns, cloudId) {
+  if (!cloudId) return null;
+  const match = (columns || []).find((column) => column.cloudId === cloudId);
+  return match?.id || null;
+}
+
+function makeColumnLocalId(name, usedLocalIds) {
+  const normalizedName = normalizeSpaces(name).toLowerCase();
+  if (normalizedName === "próximos" || normalizedName === "proximos") {
+    if (!usedLocalIds.has("todo")) return "todo";
+  }
+  if (normalizedName === "em andamento") {
+    if (!usedLocalIds.has("inprogress")) return "inprogress";
+  }
+  if (normalizedName === "concluído" || normalizedName === "concluido") {
+    if (!usedLocalIds.has("done")) return "done";
+  }
+
+  let base = normalizedName
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+  if (!base) base = "coluna";
+  let candidate = base;
+  let index = 2;
+  while (usedLocalIds.has(candidate)) {
+    candidate = `${base}-${index}`;
+    index += 1;
+  }
+  return candidate;
 }
 
 function render() {
@@ -557,7 +1013,7 @@ function onCreateBoard() {
   }
 
   state.boards.push(createBoard(name));
-  saveBoards(state.boards);
+  saveBoards();
   dom.newBoardInput.value = "";
 
   const next = state.boards[state.boards.length - 1];
@@ -579,7 +1035,7 @@ function onCreateColumn() {
 
   const newCol = createColumn(name, active.columns);
   active.columns = [...normalizeBoardColumns(active.columns), newCol];
-  saveBoards(state.boards);
+  saveBoards();
   dom.newColumnInput.value = "";
   render();
 }
@@ -628,7 +1084,7 @@ function onBoardsListClick(event) {
     if (!board) return;
     board.name = name;
     state.editingBoardId = null;
-    saveBoards(state.boards);
+    saveBoards();
     render();
     return;
   }
@@ -696,7 +1152,7 @@ function onColumnsListClick(event) {
 
     column.name = name;
     state.editingColumnId = null;
-    saveBoards(state.boards);
+    saveBoards();
     render();
     return;
   }
@@ -748,7 +1204,7 @@ function deleteBoard(boardId) {
   }
 
   state.boards = filtered;
-  saveBoards(state.boards);
+  saveBoards();
 
   if (state.activeBoardId === boardId) {
     state.activeBoardId = filtered[0].id;
@@ -786,7 +1242,7 @@ function deleteColumn(columnId) {
     });
 
   board.columns = columns;
-  saveBoards(state.boards);
+  saveBoards();
   saveTasks();
 
   state.deleteConfirmColumnId = null;
@@ -877,6 +1333,11 @@ function onGlobalKeydown(event) {
 
     if (!dom.helpModalOverlay.hidden) {
       closeHelpModal(dom);
+      return;
+    }
+
+    if (!dom.authModalOverlay.hidden) {
+      closeAuthModal();
       return;
     }
 
@@ -977,7 +1438,7 @@ async function onBackupFileSelected(event) {
       data: parsed,
       setBoards: (nextBoards) => {
         state.boards = nextBoards;
-        saveBoards(state.boards);
+        saveBoards();
       },
       setActiveBoardId: (boardId) => {
         state.activeBoardId = boardId;
@@ -1016,3 +1477,4 @@ function setBackupStatus(message) {
     dom.backupStatus.textContent = "";
   }, 2200);
 }
+

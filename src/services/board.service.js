@@ -7,7 +7,7 @@
   writeJson,
   writeString,
 } from "../storage/local.storage.js";
-import { normalizeSpaces, uid } from "../utils/helpers.js";
+import { isUuid, normalizeSpaces, uid } from "../utils/helpers.js";
 
 export function normalizeBoardColumns(columns) {
   const list = Array.isArray(columns) ? columns : [];
@@ -16,9 +16,13 @@ export function normalizeBoardColumns(columns) {
       const id = normalizeSpaces(column?.id || "").toLowerCase();
       const name = normalizeSpaces(column?.name || "");
       if (!id || !name) {
-        return null;
+      return null;
       }
-      return { id, name };
+      return {
+        id,
+        name,
+        cloudId: isUuid(column?.cloudId) ? String(column.cloudId) : null,
+      };
     })
     .filter(Boolean);
 
@@ -107,5 +111,5 @@ export function createColumn(name, existingColumns) {
     suffix += 1;
   }
 
-  return { id: nextId, name: normalizedName };
+  return { id: nextId, name: normalizedName, cloudId: null };
 }

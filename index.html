@@ -17,8 +17,10 @@
         <div>
           <h1>Fluxo Essencial</h1>
           <p class="subtitle">Kanban de foco e fluxo diário · <span id="board-name">Principal</span></p>
+          <p id="auth-status" class="auth-status">Convidado</p>
         </div>
         <div class="header-actions">
+          <button id="auth-toggle" type="button" class="auth-btn" aria-label="Abrir autenticação">Entrar</button>
           <button id="help-toggle" type="button" class="theme-btn" aria-label="Ajuda" aria-expanded="false">?</button>
           <div class="settings-wrap">
             <button id="settings-toggle" type="button" class="theme-btn" aria-label="Configurações" aria-expanded="false" aria-haspopup="true">
@@ -199,6 +201,35 @@
       <div class="help-actions">
         <p class="help-export-note">Gere tarefas automaticamente com IA usando este formato:</p>
         <button id="help-export-prompt-btn" type="button" class="help-export-btn">Copiar prompt para IA</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="auth-modal-overlay" class="modal-overlay" hidden>
+    <section class="ai-modal" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
+      <div class="ai-modal-head">
+        <h2 id="auth-modal-title">Entrar</h2>
+        <button id="auth-close-btn" type="button" class="icon-close" aria-label="Fechar autenticação">×</button>
+      </div>
+      <p id="auth-modal-subtitle">Acesse sua conta para sincronizar suas tarefas.</p>
+      <form id="auth-form" class="auth-form">
+        <label>
+          E-mail
+          <input id="auth-email" type="email" placeholder="voce@email.com" required />
+        </label>
+        <label>
+          Senha
+          <input id="auth-password" type="password" placeholder="••••••••" minlength="6" required />
+        </label>
+        <p id="auth-error" class="auth-error" aria-live="polite"></p>
+      </form>
+      <div class="auth-toggle">
+        <span id="auth-toggle-text">Ainda não tem conta?</span>
+        <button id="auth-mode-btn" type="button">Criar conta</button>
+      </div>
+      <div class="ai-modal-actions">
+        <button id="auth-cancel-btn" type="button" class="secondary">Cancelar</button>
+        <button id="auth-submit-btn" type="button" class="primary">Entrar</button>
       </div>
     </section>
   </div>
