@@ -1112,6 +1112,42 @@ function setupDropZones() {
     const taskList = columnElement.querySelector(".task-list");
     const column = columnElement.dataset.column;
 
+    columnElement.addEventListener("dragover", (event) => {
+      if (!(event.target instanceof Element)) {
+        return;
+      }
+
+      if (event.target.closest(".task-list")) {
+        return;
+      }
+
+      event.preventDefault();
+      dragOverListId = taskList.id;
+      taskList.classList.add("drag-over", "drop-at-end");
+      taskList.dataset.dropBeforeId = "";
+    });
+
+    columnElement.addEventListener("drop", (event) => {
+      if (!(event.target instanceof Element)) {
+        return;
+      }
+
+      if (event.target.closest(".task-list")) {
+        return;
+      }
+
+      event.preventDefault();
+      taskList.classList.remove("drag-over", "drop-at-end");
+
+      const draggedId = draggingTaskId || event.dataTransfer?.getData("text/plain");
+      if (!draggedId) {
+        return;
+      }
+
+      moveTaskByDrop(draggedId, column, null);
+      clearDropIndicators();
+    });
+
     taskList.addEventListener("dragover", (event) => {
       event.preventDefault();
       dragOverListId = taskList.id;
