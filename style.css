@@ -1,28 +1,29 @@
 :root {
-  --background: #f7f8fb;
-  --background-accent: #f7f8fb;
-  --surface-low: #edf1f7;
+  --ui-scale: 0.9;
+  --background: #f4f6fa;
+  --background-accent: #f4f6fa;
+  --surface-low: #e9edf4;
   --surface-card: #ffffff;
   --surface-hover: #f4f7fc;
-  --text: #0f1728;
+  --text: #111827;
   --text-muted: #667085;
-  --chip-bg: #e9edf3;
-  --primary: #1e3a8a;
-  --line-soft: #d8e0eb;
-  --focus-chip-bg: rgba(255, 255, 255, 0.94);
-  --focus-chip-border: #d4dbe6;
-  --focus-chip-text: #111827;
-  --list-bg: #f2f5fa;
-  --list-done-bg: #eceff4;
-  --done-task-bg: #f3f5f9;
+  --chip-bg: #e3e8f1;
+  --primary: #111827;
+  --line-soft: #cfd7e4;
+  --focus-chip-bg: rgba(255, 255, 255, 0.95);
+  --focus-chip-border: #d1d8e5;
+  --focus-chip-text: #162033;
+  --list-bg: #eef2f8;
+  --list-done-bg: #e8edf4;
+  --done-task-bg: #edf2f8;
   --chip-category-bg: #e9edf3;
   --chip-category-text: #344054;
   --chip-assignee-bg: #e4eefc;
   --chip-assignee-text: #1d4f91;
   --chip-tag-bg: #efe8ff;
   --chip-tag-text: #5a3d9a;
-  --chip-deadline-bg: #ffe9dd;
-  --chip-deadline-text: #9a4a1f;
+  --chip-deadline-bg: #4a3328;
+  --chip-deadline-text: #ffc79f;
 }
 
 * {
@@ -49,6 +50,7 @@ body {
   line-height: 1.45;
   color: var(--text);
   background: var(--background);
+  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -56,22 +58,22 @@ body {
 }
 
 body.dark {
-  --background: #0f1115;
-  --background-accent: #0f1115;
-  --surface-low: #171b23;
-  --surface-card: #1e2430;
-  --surface-hover: #262d3a;
-  --text: #edf2fb;
-  --text-muted: #9ba8bd;
-  --chip-bg: #2b3240;
-  --primary: #90b4f3;
-  --line-soft: #313a49;
-  --focus-chip-bg: rgba(22, 27, 36, 0.92);
-  --focus-chip-border: #354055;
-  --focus-chip-text: rgba(225, 233, 244, 0.92);
-  --list-bg: #1a202a;
-  --list-done-bg: #171c25;
-  --done-task-bg: #1f252f;
+  --background: #111214;
+  --background-accent: #111214;
+  --surface-low: #1a1b1f;
+  --surface-card: #212329;
+  --surface-hover: #2a2d34;
+  --text: #eef2f8;
+  --text-muted: #9ca6b6;
+  --chip-bg: #2c313a;
+  --primary: #d9dee8;
+  --line-soft: #3a3d46;
+  --focus-chip-bg: rgba(28, 30, 36, 0.92);
+  --focus-chip-border: #3f434d;
+  --focus-chip-text: #e5ebf5;
+  --list-bg: #1c1e23;
+  --list-done-bg: #181a1f;
+  --done-task-bg: #1d1f25;
   --chip-category-bg: #2b3240;
   --chip-category-text: #c7d2e5;
   --chip-assignee-bg: #263a56;
@@ -87,9 +89,11 @@ body.dark {
 }
 
 .app {
-  width: min(1280px, 100%);
+  width: min(calc(1280px / var(--ui-scale)), calc(100% / var(--ui-scale)));
   margin: 0 auto;
-  padding: 1.4rem 1.4rem 7rem;
+  padding: 1.2rem 1.4rem 7rem;
+  transform: scale(var(--ui-scale));
+  transform-origin: top center;
 }
 
 .topbar {
@@ -418,8 +422,8 @@ body.dark #ia-generate-btn:hover {
   padding: 0.52rem;
   border-radius: 16px;
   background: var(--surface-low);
-  border: 1px solid var(--line-soft);
-  box-shadow: 0 4px 14px rgba(15, 23, 40, 0.05);
+  border: 1px solid color-mix(in srgb, var(--line-soft) 62%, transparent);
+  box-shadow: none;
 }
 
 .column-head {
@@ -427,6 +431,12 @@ body.dark #ia-generate-btn:hover {
   align-items: center;
   justify-content: space-between;
   gap: 0.6rem;
+  padding-bottom: 0.52rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--line-soft) 56%, transparent);
+}
+
+body:not(.dark) .column-head {
+  border-bottom-color: color-mix(in srgb, var(--line-soft) 86%, transparent);
 }
 
 .column h2 {
@@ -440,11 +450,11 @@ body.dark #ia-generate-btn:hover {
 }
 
 .column[data-column="inprogress"] h2 {
-  color: color-mix(in srgb, var(--text) 86%, #3b82f6);
+  color: var(--text);
 }
 
 .column[data-column="inprogress"] {
-  border-color: color-mix(in srgb, var(--line-soft) 74%, #7aa2eb);
+  border-color: color-mix(in srgb, var(--line-soft) 62%, transparent);
 }
 
 .column[data-column="done"] h2 {
@@ -452,10 +462,30 @@ body.dark #ia-generate-btn:hover {
   opacity: 0.84;
 }
 
+.column[data-column="inprogress"] .task-list {
+  border: none;
+  box-shadow: none;
+}
+
+body.dark .column {
+  background: color-mix(in srgb, var(--surface-low) 90%, var(--surface-card));
+  border-color: #2b2f37;
+}
+
+body.dark .task-list {
+  background: color-mix(in srgb, var(--surface-low) 90%, var(--surface-card));
+  box-shadow: none;
+}
+
 .column[data-column="done"] {
   background: color-mix(in srgb, var(--surface-low) 86%, var(--background));
-  border-color: color-mix(in srgb, var(--line-soft) 84%, transparent);
+  border-color: color-mix(in srgb, var(--line-soft) 56%, transparent);
   box-shadow: none;
+}
+
+body.dark .column[data-column="done"] {
+  background: color-mix(in srgb, var(--surface-low) 90%, var(--surface-card));
+  border-color: #2b2f37;
 }
 
 .task-list {
@@ -467,13 +497,16 @@ body.dark #ia-generate-btn:hover {
   flex-direction: column;
   gap: 0.72rem;
   position: relative;
-  border: 1px solid color-mix(in srgb, var(--line-soft) 82%, transparent);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  border: none;
+  box-shadow: none;
 }
 
 .column[data-column="done"] .task-list {
   background: var(--list-done-bg);
-  border-color: color-mix(in srgb, var(--line-soft) 74%, transparent);
+}
+
+body.dark .column[data-column="done"] .task-list {
+  background: color-mix(in srgb, var(--surface-low) 90%, var(--surface-card));
 }
 
 .task-list.drag-over {
@@ -482,8 +515,8 @@ body.dark #ia-generate-btn:hover {
 
 .task {
   background: var(--surface-card);
-  border-radius: 12px;
-  padding: 1rem;
+  border-radius: 10px;
+  padding: 0.8rem 0.85rem;
   cursor: grab;
   border: 1px solid color-mix(in srgb, var(--line-soft) 72%, transparent);
   box-shadow: 0 1px 3px rgba(15, 23, 40, 0.06);
@@ -495,8 +528,29 @@ body.dark #ia-generate-btn:hover {
   border-color: color-mix(in srgb, var(--line-soft) 95%, transparent);
 }
 
+body.dark .task {
+  background: color-mix(in srgb, var(--surface-low) 82%, var(--surface-card));
+  border-color: color-mix(in srgb, var(--line-soft) 72%, transparent);
+  box-shadow: none;
+}
+
+body.dark .task:hover {
+  background: color-mix(in srgb, var(--surface-low) 76%, var(--surface-card));
+  border-color: color-mix(in srgb, var(--line-soft) 88%, transparent);
+}
+
 .column[data-column="done"] .task {
   background: var(--done-task-bg);
+}
+
+body.dark .column[data-column="done"] .task {
+  background: color-mix(in srgb, var(--surface-low) 82%, var(--surface-card));
+  border-color: color-mix(in srgb, var(--line-soft) 72%, transparent);
+}
+
+body.dark .column[data-column="done"] .task:hover {
+  background: color-mix(in srgb, var(--surface-low) 76%, var(--surface-card));
+  border-color: color-mix(in srgb, var(--line-soft) 88%, transparent);
 }
 
 .column[data-column="done"] .task-title {
@@ -534,7 +588,7 @@ body.dark #ia-generate-btn:hover {
 
 .task-title {
   margin: 0;
-  font-size: 1.08rem;
+  font-size: 1rem;
   line-height: 1.35;
   font-weight: 700;
 }
@@ -551,10 +605,10 @@ body.dark #ia-generate-btn:hover {
 }
 
 .task-meta {
-  margin-top: 0.68rem;
+  margin-top: 0.52rem;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.36rem;
+  gap: 0.3rem;
 }
 
 .task-chip {
@@ -735,7 +789,8 @@ body:not(.dark) .task-delete-confirm .danger {
   position: fixed;
   bottom: 2rem;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translateX(-50%) scale(var(--ui-scale));
+  transform-origin: bottom center;
   z-index: 120;
 }
 
