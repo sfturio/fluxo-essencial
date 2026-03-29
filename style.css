@@ -634,7 +634,7 @@ body:not(.dark) .task-delete-confirm .danger {
   bottom: 2rem;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 10;
+  z-index: 120;
 }
 
 .focus-btn {
@@ -678,12 +678,6 @@ body.focus-mode .task {
   filter: none;
 }
 
-body.focus-mode .task:hover,
-body.focus-mode .task:focus-within,
-body.focus-mode .task.dragging {
-  opacity: 1;
-}
-
 body.focus-mode .task-form,
 body.focus-mode .data-actions,
 body.focus-mode .clear-column-btn {
@@ -691,13 +685,27 @@ body.focus-mode .clear-column-btn {
 }
 
 body.focus-mode .topbar {
+  filter: blur(2px);
   opacity: 0.72;
-  transition: opacity 0.2s ease;
+  transition: filter 0.2s ease, opacity 0.2s ease;
 }
 
 body.focus-mode .board {
   grid-template-columns: minmax(320px, 760px);
   justify-content: center;
+}
+
+body.focus-mode .focus-wrap {
+  filter: none;
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+body.focus-mode .focus-btn {
+  background: color-mix(in srgb, var(--focus-chip-bg) 92%, var(--surface-card));
+  border-color: color-mix(in srgb, var(--focus-chip-border) 92%, var(--text));
+  color: var(--focus-chip-text);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.32);
 }
 
 body.focus-mode .column:not([data-column="inprogress"]) {
