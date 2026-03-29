@@ -1,4 +1,4 @@
-Ôªøimport { KANBAN_PROMPT_TEMPLATE } from "../agents/kanban.prompt.js";
+import { KANBAN_PROMPT_TEMPLATE } from "./config/kanban.prompt.js";
 import { getAppState } from "./state/app.state.js";
 import {
   getBoards,
@@ -220,7 +220,7 @@ async function initAuth() {
   } catch {
     dom.authToggleButton.disabled = true;
     dom.authToggleButton.textContent = "Entrar";
-    dom.authToggleButton.title = "Autentica√ß√£o indispon√≠vel";
+    dom.authToggleButton.title = "AutenticaÁ„o indisponÌvel";
     setAuthStatus("Convidado");
   }
 }
@@ -296,7 +296,7 @@ function updateAuthModal() {
   dom.authModalSubtitle.textContent = isSignup
     ? "Crie sua conta para sincronizar suas tarefas."
     : "Acesse sua conta para sincronizar suas tarefas.";
-  dom.authToggleText.textContent = isSignup ? "J√° tem conta?" : "Ainda n√£o tem conta?";
+  dom.authToggleText.textContent = isSignup ? "J· tem conta?" : "Ainda n„o tem conta?";
   dom.authModeButton.textContent = isSignup ? "Entrar" : "Criar conta";
   dom.authSubmitButton.textContent = isSignup ? "Criar conta" : "Entrar";
 }
@@ -607,13 +607,13 @@ function resolveLocalColumnIdByCloudId(columns, cloudId) {
 
 function makeColumnLocalId(name, usedLocalIds) {
   const normalizedName = normalizeSpaces(name).toLowerCase();
-  if (normalizedName === "pr√≥ximos" || normalizedName === "proximos") {
+  if (normalizedName === "prÛximos" || normalizedName === "proximos") {
     if (!usedLocalIds.has("todo")) return "todo";
   }
   if (normalizedName === "em andamento") {
     if (!usedLocalIds.has("inprogress")) return "inprogress";
   }
-  if (normalizedName === "conclu√≠do" || normalizedName === "concluido") {
+  if (normalizedName === "concluÌdo" || normalizedName === "concluido") {
     if (!usedLocalIds.has("done")) return "done";
   }
 
@@ -948,7 +948,7 @@ function seedInitialSampleTasks() {
   }
 
   const sample = gerarTasksIA(
-    "!!revisar fluxo de caixa (financeiro) @ana #financas #urgente +07042026; !organizar sprint semanal (manh√£) @joao #backend #api +06042026; preparar campanha de leads (marketing) @bia #conteudo #social +08042026",
+    "!!revisar fluxo de caixa (financeiro) @ana #financas #urgente +07042026; !organizar sprint semanal (manh„) @joao #backend #api +06042026; preparar campanha de leads (marketing) @bia #conteudo #social +08042026",
   );
 
   state.tasks = sample.map((task) => normalizeTask({
@@ -1460,7 +1460,7 @@ async function onBackupFileSelected(event) {
     setBackupStatus("Backup importado.");
     render();
   } catch {
-    setBackupStatus("Arquivo inv√°lido.");
+    setBackupStatus("Arquivo inv·lido.");
   } finally {
     target.value = "";
   }
