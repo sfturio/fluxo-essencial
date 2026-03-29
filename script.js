@@ -709,13 +709,32 @@ function onCreateTask(event) {
     return;
   }
 
-  tasks.push({
-    id: crypto.randomUUID(),
-    title,
-    description,
-    category: inferCategory(description),
-    status: "todo",
-  });
+  const parsed = parseTasks(title);
+
+  if (parsed.length > 0) {
+    const fallbackCategory = inferCategory(description);
+    const enriched = parsed.map((task) => {
+      if (!fallbackCategory || task.category) {
+        return task;
+      }
+
+      return {
+        ...task,
+        description: fallbackCategory,
+        category: fallbackCategory,
+      };
+    });
+
+    tasks.push(...enriched);
+  } else {
+    tasks.push({
+      id: crypto.randomUUID(),
+      title,
+      description,
+      category: inferCategory(description),
+      status: "todo",
+    });
+  }
 
   form.reset();
   titleInput.focus();
