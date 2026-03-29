@@ -102,7 +102,9 @@ body.dark {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  flex-wrap: wrap;
   margin-bottom: 1rem;
+  gap: 0.7rem;
 }
 
 .header-actions {
@@ -500,7 +502,7 @@ body.dark .column[data-column="done"] {
 }
 
 .task-list {
-  min-height: 520px;
+  min-height: clamp(260px, calc(100vh - 320px), 520px);
   background: var(--list-bg);
   border-radius: 13px;
   padding: 1rem;
@@ -1353,6 +1355,11 @@ textarea::placeholder {
 }
 
 @media (max-width: 1100px) {
+  .app {
+    width: min(1280px, 100%);
+    transform: none;
+  }
+
   .board {
     grid-template-columns: 1fr;
   }
@@ -1368,6 +1375,7 @@ textarea::placeholder {
 
 @media (max-width: 760px) {
   .app {
+    width: 100%;
     padding: 1.2rem 0.95rem 6.4rem;
   }
 
@@ -1377,6 +1385,7 @@ textarea::placeholder {
 
   .header-actions {
     align-self: flex-start;
+    margin-left: auto;
   }
 
   .task-form {
