@@ -4,7 +4,11 @@ const BOARDS_KEY = "kanban.boards.v1";
 const ACTIVE_BOARD_KEY = "kanban.active-board.v1";
 const THEME_KEY = "kanban.theme.v1";
 const FOCUS_KEY = "kanban.focus.v1";
-const COLUMNS = ["todo", "inprogress", "done"];
+const DEFAULT_COLUMNS = [
+  { id: "todo", name: "Próximos" },
+  { id: "inprogress", name: "Em andamento" },
+  { id: "done", name: "Concluído" },
+];
 const DEFAULT_BOARD_ID = "principal";
 
 let boards = loadBoards();
@@ -15,9 +19,13 @@ let dragOverListId = null;
 let editingTaskId = null;
 let modalEditingTaskId = null;
 let deleteConfirmTaskId = null;
+let commentsOpenTaskId = null;
 let editingBoardId = null;
 let deleteConfirmBoardId = null;
+let editingColumnId = null;
+let deleteConfirmColumnId = null;
 let clearConfirmColumn = null;
+let boardsPanelMode = "tables";
 
 const form = document.getElementById("task-form");
 const titleInput = document.getElementById("task-title");
@@ -28,12 +36,22 @@ const helpModalOverlay = document.getElementById("help-modal-overlay");
 const helpCloseButton = document.getElementById("help-close-btn");
 const helpExportPromptButton = document.getElementById("help-export-prompt-btn");
 
+const settingsToggleButton = document.getElementById("settings-toggle");
+const settingsMenu = document.getElementById("settings-menu");
+const settingsColumnsToggleButton = document.getElementById("settings-columns-toggle");
 const boardToggleButton = document.getElementById("board-toggle");
 const boardsOverlay = document.getElementById("boards-overlay");
+const boardsTitle = document.getElementById("boards-title");
+const boardsTablesSection = document.getElementById("boards-tables-section");
+const boardsColumnsSection = document.getElementById("boards-columns-section");
+const boardsBackupSection = document.getElementById("boards-backup-section");
 const boardsCloseButton = document.getElementById("boards-close");
 const boardsList = document.getElementById("boards-list");
 const newBoardInput = document.getElementById("new-board-input");
 const createBoardButton = document.getElementById("create-board-btn");
+const columnsList = document.getElementById("columns-list");
+const newColumnInput = document.getElementById("new-column-input");
+const createColumnButton = document.getElementById("create-column-btn");
 const exportBackupButton = document.getElementById("export-backup-btn");
 const importBackupButton = document.getElementById("import-backup-btn");
 const backupFileInput = document.getElementById("backup-file-input");
@@ -54,13 +72,15 @@ const taskEditCategory = document.getElementById("task-edit-category");
 const taskEditAssignee = document.getElementById("task-edit-assignee");
 const taskEditTags = document.getElementById("task-edit-tags");
 const taskEditDeadline = document.getElementById("task-edit-deadline");
+const taskEditCompletedAt = document.getElementById("task-edit-completed-at");
 const taskEditPriority = document.getElementById("task-edit-priority");
 
 const themeToggleButton = document.getElementById("theme-toggle");
 const themeIcon = document.getElementById("theme-icon");
+const themeLabel = document.getElementById("theme-label");
 const focusToggleButton = document.getElementById("focus-toggle");
 const focusLabel = document.getElementById("focus-label");
-const clearColumnButtons = document.querySelectorAll('[data-action="clear-column"]');
+const boardElement = document.querySelector(".board");
 
 form.addEventListener("submit", onCreateTask);
 iaGenerateButton?.addEventListener("click", openAIPlanningModal);
@@ -74,33 +94,37 @@ taskModalSave?.addEventListener("click", saveTaskModal);
 taskModalOverlay?.addEventListener("click", onTaskModalOverlayClick);
 
 boardToggleButton?.addEventListener("click", toggleBoardsPanel);
+settingsColumnsToggleButton?.addEventListener("click", openColumnsManager);
 boardsCloseButton?.addEventListener("click", closeBoardsPanel);
 boardsOverlay?.addEventListener("click", onBoardsOverlayClick);
 createBoardButton?.addEventListener("click", onCreateBoard);
 newBoardInput?.addEventListener("keydown", onNewBoardInputKeydown);
+createColumnButton?.addEventListener("click", onCreateColumn);
+newColumnInput?.addEventListener("keydown", onNewColumnInputKeydown);
 exportBackupButton?.addEventListener("click", onExportBackup);
 importBackupButton?.addEventListener("click", onImportBackupClick);
 backupFileInput?.addEventListener("change", onBackupFileSelected);
 
 boardsList?.addEventListener("click", onBoardsListClick);
 boardsList?.addEventListener("keydown", onBoardsListKeydown);
+columnsList?.addEventListener("click", onColumnsListClick);
+columnsList?.addEventListener("keydown", onColumnsListKeydown);
+boardElement?.addEventListener("click", onBoardClick);
 
 document.addEventListener("keydown", onGlobalKeydown);
 document.addEventListener("visibilitychange", onVisibilityChange);
 
 themeToggleButton?.addEventListener("click", toggleTheme);
+settingsToggleButton?.addEventListener("click", toggleSettingsMenu);
+document.addEventListener("click", onDocumentClick);
 focusToggleButton?.addEventListener("click", toggleFocusMode);
 helpToggleButton?.addEventListener("click", toggleHelpSection);
 helpCloseButton?.addEventListener("click", closeHelpModal);
 helpExportPromptButton?.addEventListener("click", onCopyPromptTemplate);
 helpModalOverlay?.addEventListener("click", onHelpOverlayClick);
-clearColumnButtons.forEach((button) => {
-  button.addEventListener("click", onClearColumnClick);
-});
 
 initTheme();
 initFocusMode();
-setupDropZones();
 updateBoardName();
 renderBoardsPanel();
 updateClearColumnButtons();
@@ -123,11 +147,15 @@ function applyTheme(theme) {
   localStorage.setItem(THEME_KEY, isDark ? "dark" : "light");
 
   if (themeIcon) {
-    themeIcon.textContent = isDark ? "light_mode" : "dark_mode";
+    themeIcon.textContent = isDark ? "dark_mode" : "light_mode";
   }
 
   if (themeToggleButton) {
     themeToggleButton.setAttribute("aria-pressed", String(isDark));
+  }
+
+  if (themeLabel) {
+    themeLabel.textContent = isDark ? "Dark" : "Light";
   }
 }
 
@@ -172,19 +200,16 @@ function loadBoards() {
     const list = Array.isArray(parsed) ? parsed : [];
 
     const normalized = list
-      .map((item) => ({
-        id: String(item.id || "").trim(),
-        name: String(item.name || "").trim(),
-      }))
+      .map(normalizeBoard)
       .filter((item) => item.id && item.name);
 
     if (normalized.length === 0) {
-      return [{ id: DEFAULT_BOARD_ID, name: "Principal" }];
+      return [normalizeBoard({ id: DEFAULT_BOARD_ID, name: "Principal", columns: DEFAULT_COLUMNS })];
     }
 
     return normalized;
   } catch {
-    return [{ id: DEFAULT_BOARD_ID, name: "Principal" }];
+    return [normalizeBoard({ id: DEFAULT_BOARD_ID, name: "Principal", columns: DEFAULT_COLUMNS })];
   }
 }
 
@@ -240,6 +265,13 @@ function saveTasks() {
 }
 
 function normalizeTask(task) {
+  return normalizeTaskForColumns(task, getActiveColumns());
+}
+
+function normalizeTaskForColumns(task, columns) {
+  const normalizedColumns = normalizeBoardColumns(columns);
+  const validStatuses = new Set(normalizedColumns.map((column) => column.id));
+  const fallbackStatus = normalizedColumns[0]?.id || "todo";
   return {
     id: task.id || crypto.randomUUID(),
     title: String(task.title || "").trim(),
@@ -247,8 +279,10 @@ function normalizeTask(task) {
     category: normalizeCategory(task.category, task.description),
     assignee: typeof task.assignee === "string" ? task.assignee.trim() : null,
     tags: Array.isArray(task.tags) ? task.tags.filter(Boolean) : [],
+    comments: normalizeTaskComments(task.comments),
     deadline: normalizeDeadline(task.deadline),
-    status: COLUMNS.includes(task.status) ? task.status : "todo",
+    completedAt: normalizeDeadline(task.completedAt),
+    status: validStatuses.has(task.status) ? task.status : fallbackStatus,
     priority: task.priority === "high" ? "high" : "normal",
     createdAt: task.createdAt ? new Date(task.createdAt) : new Date(),
   };
@@ -262,30 +296,52 @@ function updateBoardName() {
 }
 
 function toggleBoardsPanel() {
+  closeSettingsMenu();
   if (!boardsOverlay) {
     return;
   }
 
-  if (boardsOverlay.hidden) {
-    openBoardsPanel();
+  if (boardsOverlay.hidden || boardsPanelMode !== "tables") {
+    openBoardsPanel("tables");
   } else {
     closeBoardsPanel();
   }
 }
 
-function openBoardsPanel() {
+function openBoardsPanel(mode = "tables") {
   if (!boardsOverlay) {
     return;
   }
 
+  boardsPanelMode = mode === "columns" ? "columns" : "tables";
+  applyBoardsPanelMode();
   renderBoardsPanel();
   boardsOverlay.hidden = false;
 
-  if (boardToggleButton) {
-    boardToggleButton.setAttribute("aria-expanded", "true");
-  }
-
   updatePageLock();
+}
+
+function openColumnsManager() {
+  closeSettingsMenu();
+  openBoardsPanel("columns");
+  window.setTimeout(() => newColumnInput?.focus(), 0);
+}
+
+function applyBoardsPanelMode() {
+  const showingColumns = boardsPanelMode === "columns";
+
+  if (boardsTitle) {
+    boardsTitle.textContent = showingColumns ? "Colunas" : "Tabelas";
+  }
+  if (boardsTablesSection) {
+    boardsTablesSection.hidden = showingColumns;
+  }
+  if (boardsColumnsSection) {
+    boardsColumnsSection.hidden = !showingColumns;
+  }
+  if (boardsBackupSection) {
+    boardsBackupSection.hidden = showingColumns;
+  }
 }
 
 function closeBoardsPanel() {
@@ -296,12 +352,42 @@ function closeBoardsPanel() {
   boardsOverlay.hidden = true;
   editingBoardId = null;
   deleteConfirmBoardId = null;
-
-  if (boardToggleButton) {
-    boardToggleButton.setAttribute("aria-expanded", "false");
-  }
+  editingColumnId = null;
+  deleteConfirmColumnId = null;
 
   updatePageLock();
+}
+
+function toggleSettingsMenu(event) {
+  event?.stopPropagation();
+  if (!settingsMenu || !settingsToggleButton) {
+    return;
+  }
+
+  const isHidden = settingsMenu.hidden;
+  settingsMenu.hidden = !isHidden;
+  settingsToggleButton.setAttribute("aria-expanded", String(isHidden));
+}
+
+function closeSettingsMenu() {
+  if (!settingsMenu || !settingsToggleButton) {
+    return;
+  }
+
+  settingsMenu.hidden = true;
+  settingsToggleButton.setAttribute("aria-expanded", "false");
+}
+
+function onDocumentClick(event) {
+  if (!(event.target instanceof Element)) {
+    return;
+  }
+
+  if (event.target.closest(".settings-wrap")) {
+    return;
+  }
+
+  closeSettingsMenu();
 }
 
 function onBoardsOverlayClick(event) {
@@ -320,6 +406,7 @@ function onCreateBoard() {
   const board = {
     id: crypto.randomUUID(),
     name,
+    columns: DEFAULT_COLUMNS.map((column) => ({ ...column })),
   };
 
   boards.push(board);
@@ -411,12 +498,7 @@ function buildBackupPayload() {
 
 function applyBackupData(data) {
   const importedBoards = Array.isArray(data?.boards)
-    ? data.boards
-        .map((item) => ({
-          id: String(item?.id || "").trim(),
-          name: String(item?.name || "").trim(),
-        }))
-        .filter((item) => item.id && item.name)
+    ? data.boards.map(normalizeBoard).filter((item) => item.id && item.name)
     : [];
 
   if (importedBoards.length === 0) {
@@ -445,7 +527,7 @@ function applyBackupData(data) {
     const rawTasks = Array.isArray(importedTasksByBoard[board.id])
       ? importedTasksByBoard[board.id]
       : [];
-    const normalized = rawTasks.map(normalizeTask);
+    const normalized = rawTasks.map((task) => normalizeTaskForColumns(task, board.columns));
     localStorage.setItem(taskStorageKey(board.id), JSON.stringify(normalized));
   });
 
@@ -457,6 +539,8 @@ function applyBackupData(data) {
   deleteConfirmTaskId = null;
   editingBoardId = null;
   deleteConfirmBoardId = null;
+  editingColumnId = null;
+  deleteConfirmColumnId = null;
   clearConfirmColumn = null;
   updateClearColumnButtons();
 
@@ -492,6 +576,57 @@ function onNewBoardInputKeydown(event) {
     event.preventDefault();
     onCreateBoard();
   }
+}
+
+function onNewColumnInputKeydown(event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    onCreateColumn();
+  }
+}
+
+function onCreateColumn() {
+  const name = normalizeSpaces(newColumnInput?.value || "");
+  if (!name) {
+    newColumnInput?.focus();
+    return;
+  }
+
+  const active = getActiveBoard();
+  if (!active) {
+    return;
+  }
+
+  const existingIds = new Set((active.columns || []).map((column) => column.id));
+  let baseId = name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+
+  if (!baseId) {
+    baseId = `col-${(active.columns || []).length + 1}`;
+  }
+
+  let nextId = baseId;
+  let suffix = 2;
+  while (existingIds.has(nextId)) {
+    nextId = `${baseId}-${suffix}`;
+    suffix += 1;
+  }
+
+  const nextColumns = [...normalizeBoardColumns(active.columns), { id: nextId, name }];
+  active.columns = nextColumns;
+  saveBoards();
+
+  if (newColumnInput) {
+    newColumnInput.value = "";
+  }
+
+  renderBoardsPanel();
+  render();
 }
 
 function renderBoardsPanel() {
@@ -542,6 +677,71 @@ function renderBoardsPanel() {
 
     if (isEditing) {
       const input = wrapper.querySelector(".board-edit-input");
+      input?.focus();
+      input?.select();
+    }
+  });
+
+  renderColumnsPanel();
+}
+
+function renderColumnsPanel() {
+  if (!columnsList) {
+    return;
+  }
+
+  const active = getActiveBoard();
+  const columns = getActiveColumns();
+
+  columnsList.innerHTML = "";
+
+  columns.forEach((column) => {
+    const row = document.createElement("div");
+    row.className = "board-item";
+    row.dataset.columnId = column.id;
+
+    const isEditing = editingColumnId === column.id;
+    const isConfirmingDelete = deleteConfirmColumnId === column.id;
+    const isLocked = columns.length <= 1;
+
+    if (isEditing) {
+      row.innerHTML = `
+        <div class="board-edit-row">
+          <input type="text" class="column-edit-input" value="${escapeHtml(column.name)}" maxlength="40" />
+          <button type="button" data-action="confirm-rename-column">Salvar</button>
+          <button type="button" data-action="cancel-rename-column">Cancelar</button>
+        </div>
+      `;
+    } else {
+      row.innerHTML = `
+        <button type="button" class="board-select active" data-action="noop">${escapeHtml(column.name)}</button>
+        <div class="board-actions">
+          <button type="button" data-action="rename-column">Renomear</button>
+          <button type="button" data-action="delete-column"${isLocked ? " disabled" : ""}>Excluir</button>
+        </div>
+      `;
+    }
+
+    if (isConfirmingDelete && !isLocked) {
+      const tasksInColumn = tasks.filter((task) => task.status === column.id).length;
+      const warningText =
+        tasksInColumn > 0
+          ? `Excluir coluna e ${tasksInColumn} tarefa${tasksInColumn > 1 ? "s" : ""}?`
+          : "Excluir coluna?";
+      const confirm = document.createElement("div");
+      confirm.className = "board-delete-confirm";
+      confirm.innerHTML = `
+        <span>${escapeHtml(warningText)}</span>
+        <button type="button" class="danger" data-action="confirm-delete-column">Confirmar</button>
+        <button type="button" data-action="cancel-delete-column">Cancelar</button>
+      `;
+      row.appendChild(confirm);
+    }
+
+    columnsList.appendChild(row);
+
+    if (isEditing) {
+      const input = row.querySelector(".column-edit-input");
       input?.focus();
       input?.select();
     }
@@ -674,6 +874,8 @@ function deleteBoard(boardId) {
 
   deleteConfirmBoardId = null;
   editingBoardId = null;
+  deleteConfirmColumnId = null;
+  editingColumnId = null;
   renderBoardsPanel();
 }
 
@@ -694,6 +896,10 @@ function switchBoard(boardId, options = {}) {
   tasks = loadTasksForBoard(boardId).map(normalizeTask);
   editingTaskId = null;
   deleteConfirmTaskId = null;
+  commentsOpenTaskId = null;
+  editingColumnId = null;
+  deleteConfirmColumnId = null;
+  clearConfirmColumn = null;
 
   updateBoardName();
   renderBoardsPanel();
@@ -736,8 +942,10 @@ function onCreateTask(event) {
       category: inferCategory(description),
       assignee: null,
       tags: [],
+      comments: [],
       deadline: null,
-      status: "todo",
+      completedAt: null,
+      status: getPrimaryColumnId(),
       priority: "normal",
       createdAt: new Date(),
     });
@@ -772,10 +980,82 @@ function onGenerateIATasks() {
 
 function getExamplePlanInput() {
   return [
-    "!organizar sprint semanal (manhã) @joao #backend #api +2026-04-06",
-    "!!revisar fluxo de caixa (financeiro) @ana #financas #urgente +2026-04-07",
-    "preparar campanha de leads (marketing) @bia #conteudo #social +2026-04-08",
+    "!organizar sprint semanal (manhã) @joao #backend #api +06-04-2026",
+    "!!revisar fluxo de caixa (financeiro) @ana #financas #urgente +07-04-2026",
+    "preparar campanha de leads (marketing) @bia #conteudo #social +08-04-2026",
   ].join("; ");
+}
+
+function normalizeBoard(board) {
+  return {
+    id: String(board?.id || "").trim(),
+    name: String(board?.name || "").trim(),
+    columns: normalizeBoardColumns(board?.columns),
+  };
+}
+
+function normalizeTaskComments(comments) {
+  if (!Array.isArray(comments)) {
+    return [];
+  }
+
+  return comments
+    .map((comment) => {
+      if (typeof comment === "string") {
+        const text = normalizeSpaces(comment);
+        return text ? { id: crypto.randomUUID(), text, createdAt: new Date() } : null;
+      }
+
+      const text = normalizeSpaces(comment?.text || "");
+      if (!text) {
+        return null;
+      }
+
+      return {
+        id: String(comment?.id || crypto.randomUUID()),
+        text,
+        createdAt: comment?.createdAt ? new Date(comment.createdAt) : new Date(),
+      };
+    })
+    .filter(Boolean);
+}
+
+function normalizeBoardColumns(columns) {
+  const source = Array.isArray(columns) ? columns : DEFAULT_COLUMNS;
+  const used = new Set();
+  const normalized = source
+    .map((column, index) => {
+      const fallbackId = index < DEFAULT_COLUMNS.length ? DEFAULT_COLUMNS[index].id : `col-${index + 1}`;
+      const fallbackName = index < DEFAULT_COLUMNS.length ? DEFAULT_COLUMNS[index].name : `Coluna ${index + 1}`;
+      const rawId = String(column?.id || fallbackId).trim().toLowerCase();
+      const id = rawId.replace(/[^a-z0-9_-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") || fallbackId;
+      const uniqueId = used.has(id) ? `${id}-${index + 1}` : id;
+      used.add(uniqueId);
+      const name = normalizeSpaces(column?.name || fallbackName) || fallbackName;
+      return { id: uniqueId, name };
+    })
+    .filter((column) => column.id && column.name);
+
+  return normalized.length > 0 ? normalized : DEFAULT_COLUMNS.map((column) => ({ ...column }));
+}
+
+function getActiveBoard() {
+  return boards.find((board) => board.id === activeBoardId) || boards[0] || null;
+}
+
+function getActiveColumns() {
+  const active = getActiveBoard();
+  return normalizeBoardColumns(active?.columns);
+}
+
+function getPrimaryColumnId() {
+  const columns = getActiveColumns();
+  return columns[0]?.id || DEFAULT_COLUMNS[0].id;
+}
+
+function getFocusColumnId() {
+  const columns = getActiveColumns();
+  return columns.find((column) => column.id === "inprogress")?.id || columns[1]?.id || columns[0]?.id;
 }
 
 function gerarTasksIA(text) {
@@ -794,6 +1074,9 @@ function gerarTasksIA(text) {
 }
 
 function parseTasks(input) {
+  const columns = getActiveColumns();
+  const firstStatus = columns[0]?.id || "todo";
+  const focusStatus = getFocusColumnId();
   const rawItems = String(input || "")
     .split(";")
     .map((item) => normalizeSpaces(item))
@@ -809,8 +1092,10 @@ function parseTasks(input) {
       category: task.category,
       assignee: task.assignee,
       tags: task.tags,
+      comments: [],
       deadline: task.deadline,
-      status: task.column === "em_andamento" ? "inprogress" : "todo",
+      completedAt: null,
+      status: task.column === "em_andamento" ? focusStatus : firstStatus,
       priority: task.priority,
       createdAt: task.createdAt,
     }));
@@ -949,7 +1234,7 @@ function normalizeDeadline(value) {
     }
   }
 
-  return raw;
+  return null;
 }
 
 function isValidDateParts(day, month, year) {
@@ -1004,6 +1289,8 @@ function onGlobalKeydown(event) {
     return;
   }
 
+  closeSettingsMenu();
+
   if (aiModalOverlay && !aiModalOverlay.hidden) {
     closeAIPlanningModal();
     return;
@@ -1035,6 +1322,7 @@ function onVisibilityChange() {
     return;
   }
 
+  closeSettingsMenu();
   closeAIPlanningModal();
   closeTaskModal();
   closeHelpModal();
@@ -1089,6 +1377,139 @@ function onHelpOverlayClick(event) {
   }
 }
 
+function onColumnsListClick(event) {
+  const target = event.target;
+  if (!(target instanceof Element)) {
+    return;
+  }
+
+  const actionElement = target.closest("[data-action]");
+  if (!(actionElement instanceof HTMLElement)) {
+    return;
+  }
+
+  const action = actionElement.dataset.action;
+  if (!action || action === "noop") {
+    return;
+  }
+
+  const item = actionElement.closest("[data-column-id]");
+  const columnId = item?.dataset.columnId;
+  if (!columnId) {
+    return;
+  }
+
+  const active = getActiveBoard();
+  if (!active) {
+    return;
+  }
+
+  const columns = getActiveColumns();
+  const lockedDelete = columns.length <= 1;
+
+  if (action === "rename-column") {
+    deleteConfirmColumnId = null;
+    editingColumnId = columnId;
+    renderBoardsPanel();
+    return;
+  }
+
+  if (action === "cancel-rename-column") {
+    editingColumnId = null;
+    renderBoardsPanel();
+    return;
+  }
+
+  if (action === "confirm-rename-column") {
+    const input = item.querySelector(".column-edit-input");
+    if (!(input instanceof HTMLInputElement)) {
+      return;
+    }
+
+    const nextName = normalizeSpaces(input.value || "");
+    if (!nextName) {
+      input.focus();
+      return;
+    }
+
+    const nextColumns = columns.map((column) =>
+      column.id === columnId ? { ...column, name: nextName } : column,
+    );
+
+    active.columns = nextColumns;
+    editingColumnId = null;
+    saveBoards();
+    renderBoardsPanel();
+    render();
+    return;
+  }
+
+  if (action === "delete-column") {
+    if (lockedDelete) {
+      return;
+    }
+    editingColumnId = null;
+    deleteConfirmColumnId = deleteConfirmColumnId === columnId ? null : columnId;
+    renderBoardsPanel();
+    return;
+  }
+
+  if (action === "cancel-delete-column") {
+    deleteConfirmColumnId = null;
+    renderBoardsPanel();
+    return;
+  }
+
+  if (action === "confirm-delete-column") {
+    if (lockedDelete) {
+      return;
+    }
+    deleteColumn(columnId);
+  }
+}
+
+function onColumnsListKeydown(event) {
+  if (event.key !== "Enter") {
+    return;
+  }
+
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+
+  if (target.classList.contains("column-edit-input")) {
+    event.preventDefault();
+    const row = target.closest("[data-column-id]");
+    const confirmButton = row?.querySelector('[data-action="confirm-rename-column"]');
+    confirmButton?.click();
+  }
+}
+
+function deleteColumn(columnId) {
+  const active = getActiveBoard();
+  if (!active) {
+    return;
+  }
+
+  const columns = getActiveColumns();
+  const nextColumns = columns.filter((column) => column.id !== columnId);
+  if (nextColumns.length === 0) {
+    return;
+  }
+
+  tasks = tasks.filter((task) => task.status !== columnId);
+
+  active.columns = nextColumns;
+  editingColumnId = null;
+  deleteConfirmColumnId = null;
+  clearConfirmColumn = null;
+  saveBoards();
+  saveTasks();
+  renderBoardsPanel();
+  render();
+}
+
 async function onCopyPromptTemplate() {
   const content = `Transforme a ideia abaixo em tarefas acionáveis para Kanban.
 
@@ -1101,12 +1522,12 @@ Regras:
   ( ) = categoria
   @ = responsável
   # = tags
-  + = data (YYYY-MM-DD)
+  + = data (DD-MM-AAAA)
 - Mantenha tarefas curtas
 - Sem explicações
 
 Exemplo:
-!criar API (manhã) @joao #backend +2026-04-05
+!criar API (manhã) @joao #backend +05-04-2026
 
 Ideia:
 Quero organizar minha semana para avançar no produto, melhorar a captação de clientes e manter consistência de saúde.
@@ -1146,14 +1567,24 @@ function normalizeCategory(category, description) {
   return fromDescription.length > 0 ? fromDescription : null;
 }
 
-function onClearColumnClick(event) {
-  const target = event.currentTarget;
-  if (!(target instanceof HTMLElement)) {
+function onBoardClick(event) {
+  const target = event.target;
+  if (!(target instanceof Element)) {
     return;
   }
 
-  const column = target.dataset.column;
-  if (!COLUMNS.includes(column)) {
+  const clearButton = target.closest('[data-action="clear-column"]');
+  if (!(clearButton instanceof HTMLElement)) {
+    return;
+  }
+
+  const column = clearButton.dataset.column;
+  onClearColumnClick(column);
+}
+
+function onClearColumnClick(column) {
+  const validColumns = new Set(getActiveColumns().map((entry) => entry.id));
+  if (!column || !validColumns.has(column)) {
     return;
   }
 
@@ -1183,7 +1614,7 @@ function clearColumnTasks(column) {
 }
 
 function updateClearColumnButtons() {
-  clearColumnButtons.forEach((button) => {
+  document.querySelectorAll('[data-action="clear-column"]').forEach((button) => {
     const column = button.dataset.column;
     const isConfirming = clearConfirmColumn === column;
     button.classList.toggle("confirming", isConfirming);
@@ -1192,19 +1623,65 @@ function updateClearColumnButtons() {
 }
 
 function render() {
-  COLUMNS.forEach((column) => {
-    const list = document.getElementById(`${column}-list`);
+  renderBoardColumns();
+
+  const columns = getActiveColumns();
+  const fallbackStatus = columns[0]?.id || "todo";
+  const validStatuses = new Set(columns.map((column) => column.id));
+  let changed = false;
+
+  tasks = tasks.map((task) => {
+    if (validStatuses.has(task.status)) {
+      return task;
+    }
+    changed = true;
+    return { ...task, status: fallbackStatus };
+  });
+
+  if (changed) {
+    saveTasks();
+  }
+
+  columns.forEach((column) => {
+    const list = document.getElementById(`${column.id}-list`);
     if (!list) {
       return;
     }
 
     list.innerHTML = "";
 
-    const columnTasks = tasks.filter((task) => task.status === column);
+    const columnTasks = tasks.filter((task) => task.status === column.id);
     const orderedTasks = orderTasksForColumn(columnTasks);
 
     orderedTasks.forEach((task) => list.appendChild(createTaskElement(task)));
   });
+
+  setupDropZones();
+  updateClearColumnButtons();
+}
+
+function renderBoardColumns() {
+  if (!boardElement) {
+    return;
+  }
+
+  const columns = getActiveColumns();
+  const focusColumnId = getFocusColumnId();
+
+  boardElement.innerHTML = columns
+    .map((column) => {
+      const isFocusMain = column.id === focusColumnId;
+      return `
+        <article class="column" data-column="${escapeHtml(column.id)}" data-focus-main="${isFocusMain ? "true" : "false"}">
+          <div class="column-head">
+            <h2>${escapeHtml(column.name)}</h2>
+            <button type="button" class="clear-column-btn" data-action="clear-column" data-column="${escapeHtml(column.id)}">Limpar</button>
+          </div>
+          <div class="task-list" id="${escapeHtml(column.id)}-list"></div>
+        </article>
+      `;
+    })
+    .join("");
 }
 
 function orderTasksForColumn(columnTasks) {
@@ -1244,8 +1721,10 @@ function getTaskCreatedAtTimestamp(task) {
 
 function createTaskElement(task) {
   const card = document.createElement("article");
+  const columns = getActiveColumns();
+  const lastColumnId = columns[columns.length - 1]?.id;
   const priorityClass = task.priority === "high" ? " priority-high" : task.priority === "medium" ? " priority-medium" : "";
-  card.className = `task${task.status === "done" ? " done" : ""}${priorityClass}`;
+  card.className = `task${task.status === lastColumnId ? " done" : ""}${priorityClass}`;
   card.draggable = true;
   card.dataset.id = task.id;
 
@@ -1257,6 +1736,7 @@ function createTaskElement(task) {
     <div class="task-actions">
       <button type="button" data-action="left">←</button>
       <button type="button" data-action="right">→</button>
+      <button type="button" class="comment" data-action="toggle-comments" aria-label="Comentários">🗨</button>
       <button type="button" data-action="edit">Renomear</button>
       <button type="button" class="delete" data-action="delete">Excluir</button>
     </div>
@@ -1326,9 +1806,52 @@ function createTaskElement(task) {
       hasMeta = true;
     }
 
+    if (task.completedAt) {
+      const completedAt = document.createElement("span");
+      completedAt.className = "task-chip task-completed-date";
+      completedAt.textContent = `Finalizado em ${task.completedAt}`;
+      meta.appendChild(completedAt);
+      hasMeta = true;
+    }
+
     if (hasMeta) {
       main.appendChild(meta);
     }
+
+    const comments = Array.isArray(task.comments) ? task.comments : [];
+    const isCommentsOpen = commentsOpenTaskId === task.id;
+    const commentsWrap = document.createElement("div");
+    commentsWrap.className = `task-comments${isCommentsOpen ? " open" : ""}`;
+
+    if (comments.length > 0) {
+      const list = document.createElement("div");
+      list.className = "task-comments-list";
+      comments.forEach((comment) => {
+        const item = document.createElement("p");
+        item.className = "task-comment-item";
+        appendCommentTextWithMentions(item, comment.text);
+        list.appendChild(item);
+      });
+      commentsWrap.appendChild(list);
+    } else {
+      const empty = document.createElement("p");
+      empty.className = "task-comment-empty";
+      empty.textContent = "Sem comentários";
+      commentsWrap.appendChild(empty);
+    }
+
+    const commentForm = document.createElement("div");
+    commentForm.className = "task-comment-form";
+    commentForm.innerHTML = `
+      <div class="task-comment-input-wrap">
+        <input type="text" class="task-comment-input" maxlength="180" placeholder="comentário" />
+        <span class="task-comment-prefix">@</span>
+        <input type="text" class="task-comment-assignee" maxlength="40" placeholder="nome" />
+      </div>
+      <button type="button" data-action="add-comment">Adicionar</button>
+    `;
+    commentsWrap.appendChild(commentForm);
+    main.appendChild(commentsWrap);
   }
 
   const title = card.querySelector(".task-title");
@@ -1339,8 +1862,11 @@ function createTaskElement(task) {
   const leftButton = card.querySelector('[data-action="left"]');
   const rightButton = card.querySelector('[data-action="right"]');
 
-  leftButton.disabled = task.status === "todo";
-  rightButton.disabled = task.status === "done";
+  const columnOrder = getActiveColumns();
+  const firstColumnId = columnOrder[0]?.id;
+  const terminalColumnId = columnOrder[columnOrder.length - 1]?.id;
+  leftButton.disabled = task.status === firstColumnId;
+  rightButton.disabled = task.status === terminalColumnId;
 
   card.addEventListener("click", (event) => {
     const target = event.target;
@@ -1373,6 +1899,47 @@ function createTaskElement(task) {
         editInput?.focus();
         editInput?.select();
       });
+      return;
+    }
+
+    if (action === "toggle-comments") {
+      commentsOpenTaskId = commentsOpenTaskId === task.id ? null : task.id;
+      render();
+      return;
+    }
+
+    if (action === "add-comment") {
+      const assigneeInput = card.querySelector(".task-comment-assignee");
+      const input = card.querySelector(".task-comment-input");
+      if (!(input instanceof HTMLInputElement) || !(assigneeInput instanceof HTMLInputElement)) {
+        return;
+      }
+
+      const text = normalizeSpaces(input.value || "");
+      if (!text) {
+        input.focus();
+        return;
+      }
+      const assignee = normalizeSpaces(assigneeInput.value || "").replace(/^@+/, "");
+
+      const selectedTask = tasks.find((item) => item.id === task.id);
+      if (!selectedTask) {
+        return;
+      }
+
+      if (!Array.isArray(selectedTask.comments)) {
+        selectedTask.comments = [];
+      }
+
+      selectedTask.comments.push({
+        id: crypto.randomUUID(),
+        text: assignee ? `${text} @${assignee}` : text,
+        createdAt: new Date(),
+      });
+
+      commentsOpenTaskId = task.id;
+      saveTasks();
+      render();
       return;
     }
 
@@ -1471,7 +2038,46 @@ function createTaskElement(task) {
     openTaskModal(task.id);
   });
 
+  const commentInput = card.querySelector(".task-comment-input");
+  const commentAssigneeInput = card.querySelector(".task-comment-assignee");
+  const onCommentEnter = (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      const addButton = card.querySelector('[data-action="add-comment"]');
+      if (addButton instanceof HTMLElement) {
+        addButton.click();
+      }
+    }
+  };
+
+  commentInput?.addEventListener("keydown", onCommentEnter);
+  commentAssigneeInput?.addEventListener("keydown", onCommentEnter);
+
   return card;
+}
+
+function appendCommentTextWithMentions(container, text) {
+  const source = String(text || "");
+  const mentionRegex = /(@[a-zA-Z0-9_.-]+)/g;
+  let lastIndex = 0;
+  let match;
+
+  while ((match = mentionRegex.exec(source)) !== null) {
+    if (match.index > lastIndex) {
+      container.appendChild(document.createTextNode(source.slice(lastIndex, match.index)));
+    }
+
+    const mention = document.createElement("span");
+    mention.className = "task-comment-mention";
+    mention.textContent = match[1];
+    container.appendChild(mention);
+
+    lastIndex = mentionRegex.lastIndex;
+  }
+
+  if (lastIndex < source.length) {
+    container.appendChild(document.createTextNode(source.slice(lastIndex)));
+  }
 }
 
 function moveTask(taskId, direction) {
@@ -1480,14 +2086,15 @@ function moveTask(taskId, direction) {
     return;
   }
 
-  const index = COLUMNS.indexOf(task.status);
+  const columns = getActiveColumns().map((column) => column.id);
+  const index = columns.indexOf(task.status);
   const nextIndex = index + direction;
 
-  if (nextIndex < 0 || nextIndex >= COLUMNS.length) {
+  if (nextIndex < 0 || nextIndex >= columns.length) {
     return;
   }
 
-  task.status = COLUMNS[nextIndex];
+  task.status = columns[nextIndex];
   editingTaskId = null;
   deleteConfirmTaskId = null;
   saveTasks();
@@ -1501,6 +2108,9 @@ function deleteTask(taskId) {
   }
   if (deleteConfirmTaskId === taskId) {
     deleteConfirmTaskId = null;
+  }
+  if (commentsOpenTaskId === taskId) {
+    commentsOpenTaskId = null;
   }
   saveTasks();
   render();
@@ -1537,6 +2147,9 @@ function openTaskModal(taskId) {
   }
   if (taskEditDeadline) {
     taskEditDeadline.value = task.deadline || "";
+  }
+  if (taskEditCompletedAt) {
+    taskEditCompletedAt.value = task.completedAt || "";
   }
   if (taskEditPriority) {
     taskEditPriority.value = task.priority || "normal";
@@ -1588,6 +2201,7 @@ function saveTaskModal() {
     .filter((tag) => tag.length > 0);
   task.tags = tags;
   task.deadline = normalizeDeadline(taskEditDeadline?.value || "");
+  task.completedAt = normalizeDeadline(taskEditCompletedAt?.value || "");
   task.priority = taskEditPriority?.value || "normal";
 
   saveTasks();
@@ -1599,6 +2213,9 @@ function setupDropZones() {
   document.querySelectorAll(".column").forEach((columnElement) => {
     const taskList = columnElement.querySelector(".task-list");
     const column = columnElement.dataset.column;
+    if (!(taskList instanceof HTMLElement) || !column) {
+      return;
+    }
 
     columnElement.addEventListener("dragover", (event) => {
       if (!(event.target instanceof Element)) {

@@ -19,10 +19,27 @@
       </div>
       <div class="header-actions">
         <button id="help-toggle" type="button" class="theme-btn" aria-label="Ajuda" aria-expanded="false">?</button>
-        <button id="board-toggle" type="button" class="theme-btn" aria-label="Tabelas" aria-expanded="false">+</button>
-        <button id="theme-toggle" type="button" class="theme-btn" aria-label="Alternar tema" aria-pressed="false">
-          <span id="theme-icon" class="material-symbols-outlined">dark_mode</span>
-        </button>
+        <div class="settings-wrap">
+          <button id="settings-toggle" type="button" class="theme-btn" aria-label="Configurações" aria-expanded="false" aria-haspopup="true">
+            <span class="material-symbols-outlined">settings</span>
+          </button>
+          <div id="settings-menu" class="settings-menu" hidden>
+            <div class="settings-group">
+              <p class="settings-title">Kanban</p>
+              <button id="board-toggle" type="button" class="settings-item" aria-label="Abrir tabelas">Tabelas</button>
+              <button id="settings-columns-toggle" type="button" class="settings-item" aria-label="Abrir colunas">Colunas</button>
+            </div>
+            <div class="settings-separator"></div>
+            <div class="settings-group">
+              <p class="settings-title">Aparência</p>
+              <button id="theme-toggle" type="button" class="settings-item" aria-label="Alternar tema" aria-pressed="false">
+                <span id="theme-icon" class="material-symbols-outlined">dark_mode</span>
+                <span>Tema</span>
+                <span id="theme-label" class="settings-theme-state">Dark</span>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </header>
 
@@ -75,7 +92,7 @@
         <button id="ai-close-btn" type="button" class="icon-close" aria-label="Fechar modal">×</button>
       </div>
       <p>Descreva o que você quer fazer</p>
-      <textarea id="ai-plan-input" rows="7" placeholder="Ex: !criar API (manhã) @joao #backend +2026-04-05; estudar node (noite)"></textarea>
+      <textarea id="ai-plan-input" rows="7" placeholder="Ex: !criar API (manhã) @joao #backend +05-04-2026; estudar node (noite)"></textarea>
       <div class="ai-modal-actions">
         <button id="ai-cancel-btn" type="button" class="secondary">Cancelar</button>
         <button id="ai-generate-confirm-btn" type="button" class="primary">Adicionar tarefas</button>
@@ -89,12 +106,22 @@
         <h2 id="boards-title">Tabelas</h2>
         <button id="boards-close" type="button" class="icon-close" aria-label="Fechar tabelas">×</button>
       </div>
-      <div id="boards-list" class="boards-list"></div>
-      <div class="boards-create">
-        <input id="new-board-input" type="text" placeholder="Nova tabela" maxlength="60" />
-        <button id="create-board-btn" type="button">+ Nova tabela</button>
+      <div id="boards-tables-section">
+        <div id="boards-list" class="boards-list"></div>
+        <div class="boards-create">
+          <input id="new-board-input" type="text" placeholder="Nova tabela" maxlength="60" />
+          <button id="create-board-btn" type="button">+ Nova tabela</button>
+        </div>
       </div>
-      <div class="boards-backup">
+      <div id="boards-columns-section" class="boards-columns">
+        <h3>Colunas da tabela ativa</h3>
+        <div id="columns-list" class="boards-list"></div>
+        <div class="boards-create">
+          <input id="new-column-input" type="text" placeholder="Nova coluna" maxlength="40" />
+          <button id="create-column-btn" type="button">+ Nova coluna</button>
+        </div>
+      </div>
+      <div id="boards-backup-section" class="boards-backup">
         <button id="export-backup-btn" type="button">Exportar backup</button>
         <button id="import-backup-btn" type="button">Importar backup</button>
         <input id="backup-file-input" type="file" accept="application/json" hidden />
@@ -112,23 +139,27 @@
       <div class="task-modal-fields">
         <label>
           Título
-          <input id="task-edit-title" type="text" maxlength="120" />
+          <input id="task-edit-title" type="text" maxlength="120" placeholder="Revisar fluxo de caixa" />
         </label>
         <label>
           Categoria
-          <input id="task-edit-category" type="text" maxlength="60" />
+          <input id="task-edit-category" type="text" maxlength="60" placeholder="Financeiro" />
         </label>
         <label>
           Responsável
-          <input id="task-edit-assignee" type="text" maxlength="60" />
+          <input id="task-edit-assignee" type="text" maxlength="60" placeholder="ana" />
         </label>
         <label>
           Tags (separe por vírgula)
-          <input id="task-edit-tags" type="text" maxlength="120" />
+          <input id="task-edit-tags" type="text" maxlength="120" placeholder="financas, urgente" />
         </label>
         <label>
           Data
-          <input id="task-edit-deadline" type="text" maxlength="32" />
+          <input id="task-edit-deadline" type="text" maxlength="32" placeholder="02041998" />
+        </label>
+        <label>
+          Finalizado em
+          <input id="task-edit-completed-at" type="text" maxlength="32" placeholder="02041998" />
         </label>
         <label>
           Prioridade
@@ -158,9 +189,9 @@
         <li>Use <code class="cmd-category">(categoria)</code> para definir a categoria</li>
         <li>Use <code class="cmd-assignee">@responsavel</code> para responsável</li>
         <li>Use <code class="cmd-tag">#tag</code> para tags</li>
-        <li>Use <code class="cmd-date">+data</code> para Data</li>
+        <li>Use <code class="cmd-date">+data</code> para Data (DD-MM-AAAA)</li>
       </ul>
-      <p class="help-example">Exemplo: <code>!criar API (manhã) @joao #backend +2026-04-05</code></p>
+      <p class="help-example">Exemplo: <code>!criar API (manhã) @joao #backend +05-04-2026</code></p>
       <div class="help-actions">
         <p class="help-export-note">Gere tarefas automaticamente com IA usando este formato:</p>
         <button id="help-export-prompt-btn" type="button" class="help-export-btn">Copiar prompt para IA</button>
