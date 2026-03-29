@@ -12,69 +12,73 @@
 </head>
 <body>
   <main class="app">
-    <header class="topbar">
-      <div>
-        <h1>Fluxo Essencial</h1>
-        <p class="subtitle">Kanban de foco e fluxo diário · <span id="board-name">Principal</span></p>
-      </div>
-      <div class="header-actions">
-        <button id="help-toggle" type="button" class="theme-btn" aria-label="Ajuda" aria-expanded="false">?</button>
-        <div class="settings-wrap">
-          <button id="settings-toggle" type="button" class="theme-btn" aria-label="Configurações" aria-expanded="false" aria-haspopup="true">
-            <span class="material-symbols-outlined">settings</span>
-          </button>
-          <div id="settings-menu" class="settings-menu" hidden>
-            <div class="settings-group">
-              <p class="settings-title">Kanban</p>
-              <button id="board-toggle" type="button" class="settings-item" aria-label="Abrir tabelas">Tabelas</button>
-              <button id="settings-columns-toggle" type="button" class="settings-item" aria-label="Abrir colunas">Colunas</button>
-            </div>
-            <div class="settings-separator"></div>
-            <div class="settings-group">
-              <p class="settings-title">Aparência</p>
-              <button id="theme-toggle" type="button" class="settings-item" aria-label="Alternar tema" aria-pressed="false">
-                <span id="theme-icon" class="material-symbols-outlined">dark_mode</span>
-                <span>Tema</span>
-                <span id="theme-label" class="settings-theme-state">Dark</span>
-              </button>
+    <div class="app-top">
+      <header class="topbar">
+        <div>
+          <h1>Fluxo Essencial</h1>
+          <p class="subtitle">Kanban de foco e fluxo diário · <span id="board-name">Principal</span></p>
+        </div>
+        <div class="header-actions">
+          <button id="help-toggle" type="button" class="theme-btn" aria-label="Ajuda" aria-expanded="false">?</button>
+          <div class="settings-wrap">
+            <button id="settings-toggle" type="button" class="theme-btn" aria-label="Configurações" aria-expanded="false" aria-haspopup="true">
+              <span class="material-symbols-outlined">settings</span>
+            </button>
+            <div id="settings-menu" class="settings-menu" hidden>
+              <div class="settings-group">
+                <p class="settings-title">Kanban</p>
+                <button id="board-toggle" type="button" class="settings-item" aria-label="Abrir tabelas">Tabelas</button>
+                <button id="settings-columns-toggle" type="button" class="settings-item" aria-label="Abrir colunas">Colunas</button>
+              </div>
+              <div class="settings-separator"></div>
+              <div class="settings-group">
+                <p class="settings-title">Aparência</p>
+                <button id="theme-toggle" type="button" class="settings-item" aria-label="Alternar tema" aria-pressed="false">
+                  <span id="theme-icon" class="material-symbols-outlined">dark_mode</span>
+                  <span>Tema</span>
+                  <span id="theme-label" class="settings-theme-state">Dark</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </header>
+      </header>
 
-    <form id="task-form" class="task-form" autocomplete="off">
-      <input id="task-title" name="title" type="text" placeholder="Nova tarefa" required maxlength="120" />
-      <input id="task-description" name="description" type="text" placeholder="Categoria (opcional)" maxlength="240" />
-      <button type="submit">Adicionar</button>
-      <button id="ia-generate-btn" type="button">Planejar</button>
-    </form>
+      <form id="task-form" class="task-form" autocomplete="off">
+        <input id="task-title" name="title" type="text" placeholder="Nova tarefa" maxlength="120" />
+        <input id="task-description" name="description" type="text" placeholder="Categoria (opcional)" maxlength="240" />
+        <button type="submit">Adicionar</button>
+        <button id="ia-generate-btn" type="button">Planejar</button>
+      </form>
+    </div>
 
-    <section class="board" aria-label="Fluxo Essencial">
-      <article class="column" data-column="todo">
-        <div class="column-head">
-          <h2>Próximos</h2>
-          <button type="button" class="clear-column-btn" data-action="clear-column" data-column="todo">Limpar</button>
-        </div>
-        <div class="task-list" id="todo-list"></div>
-      </article>
+    <div class="app-main-scroll">
+      <section class="board" aria-label="Fluxo Essencial">
+        <article class="column" data-column="todo">
+          <div class="column-head">
+            <h2>Próximos</h2>
+            <button type="button" class="clear-column-btn" data-action="clear-column" data-column="todo">Limpar</button>
+          </div>
+          <div class="task-list" id="todo-list"></div>
+        </article>
 
-      <article class="column" data-column="inprogress">
-        <div class="column-head">
-          <h2>Em andamento</h2>
-          <button type="button" class="clear-column-btn" data-action="clear-column" data-column="inprogress">Limpar</button>
-        </div>
-        <div class="task-list" id="inprogress-list"></div>
-      </article>
+        <article class="column" data-column="inprogress">
+          <div class="column-head">
+            <h2>Em andamento</h2>
+            <button type="button" class="clear-column-btn" data-action="clear-column" data-column="inprogress">Limpar</button>
+          </div>
+          <div class="task-list" id="inprogress-list"></div>
+        </article>
 
-      <article class="column" data-column="done">
-        <div class="column-head">
-          <h2>Concluído</h2>
-          <button type="button" class="clear-column-btn" data-action="clear-column" data-column="done">Limpar</button>
-        </div>
-        <div class="task-list" id="done-list"></div>
-      </article>
-    </section>
+        <article class="column" data-column="done">
+          <div class="column-head">
+            <h2>Concluído</h2>
+            <button type="button" class="clear-column-btn" data-action="clear-column" data-column="done">Limpar</button>
+          </div>
+          <div class="task-list" id="done-list"></div>
+        </article>
+      </section>
+    </div>
 
   </main>
 

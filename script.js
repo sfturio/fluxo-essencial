@@ -4,6 +4,7 @@ const BOARDS_KEY = "kanban.boards.v1";
 const ACTIVE_BOARD_KEY = "kanban.active-board.v1";
 const THEME_KEY = "kanban.theme.v1";
 const FOCUS_KEY = "kanban.focus.v1";
+const INITIAL_SAMPLE_KEY = "kanban.initial-sample-seeded.v1";
 const DEFAULT_COLUMNS = [
   { id: "todo", name: "Próximos" },
   { id: "inprogress", name: "Em andamento" },
@@ -81,6 +82,8 @@ const themeLabel = document.getElementById("theme-label");
 const focusToggleButton = document.getElementById("focus-toggle");
 const focusLabel = document.getElementById("focus-label");
 const boardElement = document.querySelector(".board");
+const appRoot = document.querySelector(".app");
+const appMainScroll = document.querySelector(".app-main-scroll");
 
 form.addEventListener("submit", onCreateTask);
 iaGenerateButton?.addEventListener("click", openAIPlanningModal);
@@ -113,6 +116,7 @@ boardElement?.addEventListener("click", onBoardClick);
 
 document.addEventListener("keydown", onGlobalKeydown);
 document.addEventListener("visibilitychange", onVisibilityChange);
+appRoot?.addEventListener("wheel", onAppWheel, { passive: false });
 
 themeToggleButton?.addEventListener("click", toggleTheme);
 settingsToggleButton?.addEventListener("click", toggleSettingsMenu);
@@ -125,6 +129,7 @@ helpModalOverlay?.addEventListener("click", onHelpOverlayClick);
 
 initTheme();
 initFocusMode();
+seedInitialSampleTasks();
 updateBoardName();
 renderBoardsPanel();
 updateClearColumnButtons();
@@ -986,6 +991,27 @@ function getExamplePlanInput() {
   ].join("; ");
 }
 
+function seedInitialSampleTasks() {
+  const alreadySeeded = localStorage.getItem(INITIAL_SAMPLE_KEY) === "yes";
+  if (alreadySeeded) {
+    return;
+  }
+
+  if (tasks.length > 0) {
+    localStorage.setItem(INITIAL_SAMPLE_KEY, "yes");
+    return;
+  }
+
+  const examples = parseTasks(getExamplePlanInput());
+  if (examples.length === 0) {
+    return;
+  }
+
+  tasks.push(...examples);
+  saveTasks();
+  localStorage.setItem(INITIAL_SAMPLE_KEY, "yes");
+}
+
 function normalizeBoard(board) {
   return {
     id: String(board?.id || "").trim(),
@@ -1286,6 +1312,11 @@ function onModalOverlayClick(event) {
 
 function onGlobalKeydown(event) {
   if (event.key !== "Escape") {
+    return;
+  }
+
+  if (document.body.classList.contains("focus-mode")) {
+    applyFocusMode(false);
     return;
   }
 
@@ -1656,8 +1687,64 @@ function render() {
     orderedTasks.forEach((task) => list.appendChild(createTaskElement(task)));
   });
 
+  updateColumnTaskScrollLimits();
   setupDropZones();
   updateClearColumnButtons();
+}
+
+function onAppWheel(event) {
+  if (!(event.target instanceof Element) || !appMainScroll) {
+    return;
+  }
+
+  if (event.target.closest(".task-list.task-list-capped")) {
+    return;
+  }
+
+  event.preventDefault();
+  appMainScroll.scrollTop += event.deltaY;
+  if (event.deltaX) {
+    appMainScroll.scrollLeft += event.deltaX;
+  }
+}
+
+function updateColumnTaskScrollLimits() {
+  const columns = getActiveColumns();
+
+  columns.forEach((column) => {
+    const list = document.getElementById(`${column.id}-list`);
+    if (!(list instanceof HTMLElement)) {
+      return;
+    }
+
+    const cards = Array.from(list.querySelectorAll(".task"));
+
+    if (cards.length <= 10) {
+      list.classList.remove("task-list-capped");
+      list.style.maxHeight = "";
+      return;
+    }
+
+    const computed = window.getComputedStyle(list);
+    const gap = Number.parseFloat(computed.rowGap || computed.gap || "0") || 0;
+    const paddingTop = Number.parseFloat(computed.paddingTop || "0") || 0;
+    const paddingBottom = Number.parseFloat(computed.paddingBottom || "0") || 0;
+
+    let height = paddingTop + paddingBottom;
+    for (let i = 0; i < 10; i += 1) {
+      const card = cards[i];
+      if (!card) {
+        break;
+      }
+      height += card.offsetHeight;
+      if (i < 9) {
+        height += gap;
+      }
+    }
+
+    list.classList.add("task-list-capped");
+    list.style.maxHeight = `${Math.ceil(height)}px`;
+  });
 }
 
 function renderBoardColumns() {
@@ -1827,9 +1914,23 @@ function createTaskElement(task) {
       const list = document.createElement("div");
       list.className = "task-comments-list";
       comments.forEach((comment) => {
-        const item = document.createElement("p");
+        const item = document.createElement("div");
         item.className = "task-comment-item";
-        appendCommentTextWithMentions(item, comment.text);
+        item.dataset.commentId = String(comment.id || "");
+
+        const text = document.createElement("p");
+        text.className = "task-comment-text";
+        appendCommentTextWithMentions(text, comment.text);
+
+        const removeButton = document.createElement("button");
+        removeButton.type = "button";
+        removeButton.className = "task-comment-delete";
+        removeButton.dataset.action = "delete-comment";
+        removeButton.setAttribute("aria-label", "Excluir comentário");
+        removeButton.textContent = "×";
+
+        item.appendChild(text);
+        item.appendChild(removeButton);
         list.appendChild(item);
       });
       commentsWrap.appendChild(list);
@@ -1936,6 +2037,28 @@ function createTaskElement(task) {
         text: assignee ? `${text} @${assignee}` : text,
         createdAt: new Date(),
       });
+
+      commentsOpenTaskId = task.id;
+      saveTasks();
+      render();
+      return;
+    }
+
+    if (action === "delete-comment") {
+      const commentItem = target.closest(".task-comment-item");
+      const commentId = commentItem?.getAttribute("data-comment-id");
+      if (!commentId) {
+        return;
+      }
+
+      const selectedTask = tasks.find((item) => item.id === task.id);
+      if (!selectedTask || !Array.isArray(selectedTask.comments)) {
+        return;
+      }
+
+      selectedTask.comments = selectedTask.comments.filter(
+        (comment) => String(comment.id) !== commentId,
+      );
 
       commentsOpenTaskId = task.id;
       saveTasks();
