@@ -1076,7 +1076,7 @@ function createTaskElement(task) {
     `;
   } else {
     main.innerHTML = `
-      <button type="button" class="task-title-btn" data-action="edit" aria-label="Renomear tarefa">
+      <button type="button" class="task-title-btn" aria-label="Editar tarefa">
         <p class="task-title"></p>
       </button>
     `;
@@ -1133,6 +1133,7 @@ function createTaskElement(task) {
       });
       return;
     }
+
 
     if (action === "confirm-edit") {
       const input = card.querySelector(".task-edit-input");
@@ -1197,6 +1198,12 @@ function createTaskElement(task) {
     }
   });
 
+  const titleButton = card.querySelector(".task-title-btn");
+  titleButton?.addEventListener("dblclick", (event) => {
+    event.stopPropagation();
+    openTaskModal(task.id);
+  });
+
   card.addEventListener("dragstart", (event) => {
     draggingTaskId = task.id;
     card.classList.add("dragging");
@@ -1214,7 +1221,11 @@ function createTaskElement(task) {
     clearDropIndicators();
   });
 
-  card.addEventListener("dblclick", () => {
+  card.addEventListener("dblclick", (event) => {
+    const target = event.target;
+    if (target instanceof Element && target.closest(".task-actions")) {
+      return;
+    }
     openTaskModal(task.id);
   });
 
