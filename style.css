@@ -712,6 +712,10 @@ body.dark .column[data-column="done"] .task:hover {
   opacity: 0.9;
 }
 
+.column[data-column="done"] .task-chip {
+  opacity: 0.98;
+}
+
 .task.dragging {
   transform: scale(0.985);
   opacity: 0.78;
