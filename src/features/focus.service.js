@@ -1,8 +1,8 @@
 ﻿import { STORAGE_KEYS, readString, writeString } from "../storage/local.storage.js";
 
 export function initFocusMode({ focusToggleButton, focusLabel }) {
-  const stored = readString(STORAGE_KEYS.FOCUS_KEY, "off") === "on";
-  applyFocusMode(stored, { focusToggleButton, focusLabel });
+  // Hotfix: nunca iniciar em modo foco para não bloquear controles na carga.
+  applyFocusMode(false, { focusToggleButton, focusLabel });
 }
 
 export function toggleFocusMode({ focusToggleButton, focusLabel }) {
