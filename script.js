@@ -23,7 +23,8 @@ const titleInput = document.getElementById("task-title");
 const descriptionInput = document.getElementById("task-description");
 const boardName = document.getElementById("board-name");
 const helpToggleButton = document.getElementById("help-toggle");
-const helpSection = document.getElementById("help-section");
+const helpModalOverlay = document.getElementById("help-modal-overlay");
+const helpCloseButton = document.getElementById("help-close-btn");
 
 const boardToggleButton = document.getElementById("board-toggle");
 const boardsOverlay = document.getElementById("boards-overlay");
@@ -74,6 +75,8 @@ document.addEventListener("visibilitychange", onVisibilityChange);
 themeToggleButton?.addEventListener("click", toggleTheme);
 focusToggleButton?.addEventListener("click", toggleFocusMode);
 helpToggleButton?.addEventListener("click", toggleHelpSection);
+helpCloseButton?.addEventListener("click", closeHelpModal);
+helpModalOverlay?.addEventListener("click", onHelpOverlayClick);
 clearColumnButtons.forEach((button) => {
   button.addEventListener("click", onClearColumnClick);
 });
@@ -857,6 +860,11 @@ function onGlobalKeydown(event) {
     return;
   }
 
+  if (helpModalOverlay && !helpModalOverlay.hidden) {
+    closeHelpModal();
+    return;
+  }
+
   if (boardsOverlay && !boardsOverlay.hidden) {
     closeBoardsPanel();
     return;
@@ -874,6 +882,7 @@ function onVisibilityChange() {
   }
 
   closeAIPlanningModal();
+  closeHelpModal();
   closeBoardsPanel();
   clearConfirmColumn = null;
   updateClearColumnButtons();
@@ -882,17 +891,46 @@ function onVisibilityChange() {
 function updatePageLock() {
   const aiOpen = aiModalOverlay && !aiModalOverlay.hidden;
   const boardsOpen = boardsOverlay && !boardsOverlay.hidden;
-  document.body.style.overflow = aiOpen || boardsOpen ? "hidden" : "";
+  const helpOpen = helpModalOverlay && !helpModalOverlay.hidden;
+  document.body.style.overflow = aiOpen || boardsOpen || helpOpen ? "hidden" : "";
 }
 
 function toggleHelpSection() {
-  if (!helpSection || !helpToggleButton) {
+  if (!helpModalOverlay || !helpToggleButton) {
     return;
   }
 
-  const isOpen = helpSection.classList.contains("is-open");
-  helpSection.classList.toggle("is-open", !isOpen);
-  helpToggleButton.setAttribute("aria-expanded", String(!isOpen));
+  if (helpModalOverlay.hidden) {
+    openHelpModal();
+  } else {
+    closeHelpModal();
+  }
+}
+
+function openHelpModal() {
+  if (!helpModalOverlay || !helpToggleButton) {
+    return;
+  }
+
+  helpModalOverlay.hidden = false;
+  helpToggleButton.setAttribute("aria-expanded", "true");
+  updatePageLock();
+}
+
+function closeHelpModal() {
+  if (!helpModalOverlay || !helpToggleButton) {
+    return;
+  }
+
+  helpModalOverlay.hidden = true;
+  helpToggleButton.setAttribute("aria-expanded", "false");
+  updatePageLock();
+}
+
+function onHelpOverlayClick(event) {
+  if (event.target === helpModalOverlay) {
+    closeHelpModal();
+  }
 }
 
 function inferCategory(description) {
