@@ -1,9 +1,9 @@
 :root {
   --background: #0f1115;
   --background-accent: #0b0d11;
-  --surface-low: #161b24;
-  --surface-card: #1b212c;
-  --surface-hover: #242c39;
+  --surface-low: #171a20;
+  --surface-card: #1d2128;
+  --surface-hover: #272c35;
   --text: #edf2fb;
   --text-muted: #a2adbe;
   --chip-bg: rgba(110, 154, 227, 0.2);
@@ -37,9 +37,9 @@ body {
 body.dark {
   --background: #0f1115;
   --background-accent: #0b0d11;
-  --surface-low: #151a22;
-  --surface-card: #1b212b;
-  --surface-hover: #252d39;
+  --surface-low: #171a20;
+  --surface-card: #1d2128;
+  --surface-hover: #272c35;
   --text: #e8edf5;
   --text-muted: #a0adbf;
   --chip-bg: rgba(110, 154, 227, 0.2);
@@ -321,7 +321,7 @@ h1 {
 
 .task-list {
   min-height: 520px;
-  background: color-mix(in srgb, var(--surface-card) 92%, #11161f 8%);
+  background: color-mix(in srgb, var(--surface-card) 96%, #151920 4%);
   border-radius: 14px;
   padding: 0.82rem;
   display: flex;
@@ -333,7 +333,7 @@ h1 {
 }
 
 .column[data-column="done"] .task-list {
-  background: #131923;
+  background: #171b22;
   border-color: rgba(96, 111, 132, 0.2);
 }
 
@@ -342,7 +342,7 @@ h1 {
 }
 
 .task {
-  background: color-mix(in srgb, var(--surface-card) 96%, #161b25 4%);
+  background: color-mix(in srgb, var(--surface-card) 98%, #1a1e25 2%);
   border-radius: 11px;
   padding: 0.92rem;
   cursor: grab;
@@ -355,7 +355,7 @@ h1 {
 }
 
 .column[data-column="done"] .task {
-  background: #1a212c;
+  background: #1b2028;
 }
 
 .column[data-column="done"] .task-title {
