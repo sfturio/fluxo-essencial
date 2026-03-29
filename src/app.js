@@ -169,7 +169,7 @@ function bindEvents() {
   document.addEventListener("click", onDocumentClick);
   document.addEventListener("visibilitychange", onVisibilityChange);
 
-  dom.appRoot?.addEventListener("wheel", onAppWheel, { passive: false });
+  document.addEventListener("wheel", onAppWheel, { passive: false });
 }
 
 function loadTasksForBoard(boardId) {
@@ -1361,8 +1361,25 @@ function onAppWheel(event) {
     return;
   }
 
+  if (
+    event.target.closest(".modal-overlay") ||
+    event.target.closest(".boards-overlay") ||
+    event.target.closest(".settings-menu")
+  ) {
+    return;
+  }
+
   const list = event.target.closest(".task-list.task-list-capped");
   if (list) {
+    return;
+  }
+
+  const shouldRouteToMain =
+    event.target.closest(".app-main-scroll") ||
+    event.target.closest(".app") ||
+    !event.target.closest(".app");
+
+  if (!shouldRouteToMain) {
     return;
   }
 
