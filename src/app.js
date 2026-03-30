@@ -35,7 +35,7 @@ import {
   moveTaskByDrop,
 } from "./services/task.service.js";
 import { gerarTasksIA } from "./services/planner.service.js";
-import { parseTasks } from "./utils/parser.js";
+import { getExamplePlanInput, parseTasks } from "./utils/parser.js";
 import { isUuid, normalizeSpaces, uid } from "./utils/helpers.js";
 import { getDom } from "./ui/dom.js";
 import {
@@ -912,6 +912,19 @@ function onCreateTask(event) {
 function onGenerateIATasks() {
   const input = normalizeSpaces(dom.aiPlanInput?.value || "");
   if (!input) {
+    if (state.tasks.length === 0) {
+      const generatedDefault = gerarTasksIA(getExamplePlanInput());
+      const defaultTasks = mapGeneratedTasksToBoard(generatedDefault);
+      if (defaultTasks.length > 0) {
+        state.tasks = [...state.tasks, ...defaultTasks];
+        saveTasks();
+        closeAIPlanningModal(dom);
+        dom.aiPlanInput.value = "";
+        render();
+      }
+      return;
+    }
+
     dom.aiPlanInput.value = "";
     dom.aiPlanInput.placeholder = "Descreva tarefas separadas por ;";
     dom.aiPlanInput.focus();
@@ -919,16 +932,11 @@ function onGenerateIATasks() {
   }
 
   const generated = gerarTasksIA(input);
-  if (generated.length === 0) {
+  const next = mapGeneratedTasksToBoard(generated);
+  if (next.length === 0) {
     dom.aiPlanInput.focus();
     return;
   }
-
-  const next = generated.map((task) => normalizeTask({
-    ...task,
-    id: uid(),
-    status: task.status === "inprogress" ? getFocusColumnId() : getPrimaryColumnId(),
-  }));
 
   state.tasks = [...state.tasks, ...next];
   saveTasks();
@@ -947,18 +955,23 @@ function seedInitialSampleTasks() {
     return;
   }
 
-  const sample = gerarTasksIA(
-    "!!revisar fluxo de caixa (financeiro) @ana #financas #urgente +07042026; !organizar sprint semanal (manhã) @joao #backend #api +06042026; preparar campanha de leads (marketing) @bia #conteudo #social +08042026",
-  );
+  const sample = gerarTasksIA(getExamplePlanInput());
+  state.tasks = mapGeneratedTasksToBoard(sample);
 
-  state.tasks = sample.map((task) => normalizeTask({
+  saveTasks();
+  writeString(STORAGE_KEYS.INITIAL_SAMPLE_KEY, "done");
+}
+
+function mapGeneratedTasksToBoard(generated) {
+  if (!Array.isArray(generated) || generated.length === 0) {
+    return [];
+  }
+
+  return generated.map((task) => normalizeTask({
     ...task,
     id: uid(),
     status: task.status === "inprogress" ? getFocusColumnId() : getPrimaryColumnId(),
   }));
-
-  saveTasks();
-  writeString(STORAGE_KEYS.INITIAL_SAMPLE_KEY, "done");
 }
 
 function toggleBoardsPanel(mode = "tables") {
