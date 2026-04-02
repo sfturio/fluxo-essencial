@@ -1,33 +1,8 @@
-﻿import { normalizeSpaces } from "../utils/helpers.js";
-
-export function appendCommentTextWithMentions(container, text) {
-  const source = String(text || "");
-  const mentionRegex = /(@[a-zA-Z0-9_.-]+)/g;
-  let lastIndex = 0;
-  let match;
-
-  while ((match = mentionRegex.exec(source)) !== null) {
-    if (match.index > lastIndex) {
-      container.appendChild(document.createTextNode(source.slice(lastIndex, match.index)));
-    }
-
-    const mention = document.createElement("span");
-    mention.className = "task-comment-mention";
-    mention.textContent = match[1];
-    container.appendChild(mention);
-
-    lastIndex = mentionRegex.lastIndex;
-  }
-
-  if (lastIndex < source.length) {
-    container.appendChild(document.createTextNode(source.slice(lastIndex)));
-  }
-}
+import { normalizeSpaces } from "../utils/helpers.js";
 
 export function createTaskElement(task, context) {
   const {
     getActiveColumns,
-    ui,
     state,
     actions,
   } = context;
@@ -46,7 +21,6 @@ export function createTaskElement(task, context) {
   card.innerHTML = `
     <div class="task-main"></div>
     <div class="task-actions">
-      <button type="button" class="comment" data-action="toggle-comments" aria-label="Comentários">🗨</button>
       <button type="button" data-action="edit">Renomear</button>
       <button type="button" class="delete" data-action="delete">Excluir</button>
     </div>
@@ -125,56 +99,6 @@ export function createTaskElement(task, context) {
     if (hasMeta) {
       main.appendChild(meta);
     }
-
-    const comments = Array.isArray(task.comments) ? task.comments : [];
-    const isCommentsOpen = state.commentsOpenTaskId === task.id;
-    const commentsWrap = document.createElement("div");
-    commentsWrap.className = `task-comments${isCommentsOpen ? " open" : ""}`;
-
-    if (comments.length > 0) {
-      const list = document.createElement("div");
-      list.className = "task-comments-list";
-      comments.forEach((comment) => {
-        const item = document.createElement("div");
-        item.className = "task-comment-item";
-        item.dataset.commentId = String(comment.id || "");
-
-        const text = document.createElement("p");
-        text.className = "task-comment-text";
-        appendCommentTextWithMentions(text, comment.text);
-
-        const removeButton = document.createElement("button");
-        removeButton.type = "button";
-        removeButton.className = "task-comment-delete";
-        removeButton.dataset.action = "delete-comment";
-        removeButton.setAttribute("aria-label", "Excluir comentário");
-        removeButton.textContent = "×";
-
-        item.appendChild(text);
-        item.appendChild(removeButton);
-        list.appendChild(item);
-      });
-      commentsWrap.appendChild(list);
-    } else {
-      const empty = document.createElement("p");
-      empty.className = "task-comment-empty";
-      empty.textContent = "Sem comentários";
-      commentsWrap.appendChild(empty);
-    }
-
-    const commentForm = document.createElement("div");
-    commentForm.className = "task-comment-form";
-    commentForm.innerHTML = `
-      <div class="task-comment-input-wrap">
-        <input type="text" class="task-comment-input" maxlength="180" placeholder="comentário" />
-        <span class="task-comment-prefix">@</span>
-        <input type="text" class="task-comment-assignee" maxlength="40" placeholder="nome" />
-      </div>
-      <button type="button" data-action="add-comment">Adicionar</button>
-    `;
-
-    commentsWrap.appendChild(commentForm);
-    main.appendChild(commentsWrap);
   }
 
   const title = card.querySelector(".task-title");
@@ -224,21 +148,6 @@ export function createTaskElement(task, context) {
     }
     actions.openTaskModal(task.id);
   });
-
-  const commentInput = card.querySelector(".task-comment-input");
-  const commentAssigneeInput = card.querySelector(".task-comment-assignee");
-  const onCommentEnter = (event) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      const addButton = card.querySelector('[data-action="add-comment"]');
-      if (addButton instanceof HTMLElement) {
-        addButton.click();
-      }
-    }
-  };
-
-  commentInput?.addEventListener("keydown", onCommentEnter);
-  commentAssigneeInput?.addEventListener("keydown", onCommentEnter);
 
   return card;
 }

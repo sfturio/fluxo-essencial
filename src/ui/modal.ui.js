@@ -60,6 +60,7 @@ export function openTaskModal(dom, task) {
   if (!dom.taskModalOverlay || !task) return;
 
   if (dom.taskEditTitle) dom.taskEditTitle.value = task.title || "";
+  if (dom.taskEditDescription) dom.taskEditDescription.value = task.description || "";
   if (dom.taskEditCategory) dom.taskEditCategory.value = task.category || "";
   if (dom.taskEditAssignee) dom.taskEditAssignee.value = task.assignee || "";
   if (dom.taskEditTags) dom.taskEditTags.value = Array.isArray(task.tags) ? task.tags.join(", ") : "";
@@ -81,6 +82,7 @@ export function closeTaskModal(dom) {
 export function readTaskModalData(dom) {
   return {
     title: dom.taskEditTitle?.value?.trim() || "",
+    description: dom.taskEditDescription?.value?.trim() || "",
     category: dom.taskEditCategory?.value?.trim() || null,
     assignee: dom.taskEditAssignee?.value?.trim() || null,
     tags: (dom.taskEditTags?.value || "")

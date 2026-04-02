@@ -172,6 +172,14 @@ function bindEvents() {
 
   dom.exportBackupButton?.addEventListener("click", onExportBackup);
   dom.importBackupButton?.addEventListener("click", () => dom.backupFileInput?.click());
+  dom.settingsExportBackupButton?.addEventListener("click", () => {
+    closeSettingsMenu(dom);
+    onExportBackup();
+  });
+  dom.settingsImportBackupButton?.addEventListener("click", () => {
+    closeSettingsMenu(dom);
+    dom.backupFileInput?.click();
+  });
   dom.backupFileInput?.addEventListener("change", onBackupFileSelected);
 
   dom.boardsList?.addEventListener("click", onBoardsListClick);
@@ -602,6 +610,13 @@ async function pullCloudToLocal() {
       return false;
     }
 
+    const localTaskCount = countLocalTasksAcrossBoards(state.boards);
+    const cloudTaskCount = Array.isArray(snapshot.tasks) ? snapshot.tasks.length : 0;
+    if (cloudTaskCount === 0 && localTaskCount > 0) {
+      console.warn("Snapshot cloud vazio detectado; preservando dados locais e evitando sobrescrita.");
+      return false;
+    }
+
     const previousBoardIds = state.boards.map((board) => board.id);
     const localById = new Map(state.boards.map((board) => [board.id, board]));
     const cloudColumnsByBoard = new Map();
@@ -1025,62 +1040,6 @@ function onTaskAction({ action, task, card, target }) {
   if (action === "right") {
     state.tasks = moveTask(state.tasks, task.id, 1, getActiveColumns());
     resetTaskTransientState();
-    saveTasks();
-    render();
-    return;
-  }
-
-  if (action === "toggle-comments") {
-    state.commentsOpenTaskId = state.commentsOpenTaskId === task.id ? null : task.id;
-    render();
-    return;
-  }
-
-  if (action === "add-comment") {
-    const assigneeInput = card.querySelector(".task-comment-assignee");
-    const input = card.querySelector(".task-comment-input");
-    if (!(input instanceof HTMLInputElement) || !(assigneeInput instanceof HTMLInputElement)) {
-      return;
-    }
-
-    const text = normalizeSpaces(input.value);
-    if (!text) {
-      input.focus();
-      return;
-    }
-
-    const assignee = normalizeSpaces(assigneeInput.value).replace(/^@+/, "");
-    const selectedTask = state.tasks.find((item) => item.id === task.id);
-    if (!selectedTask) {
-      return;
-    }
-
-    if (!Array.isArray(selectedTask.comments)) {
-      selectedTask.comments = [];
-    }
-
-    selectedTask.comments.push({
-      id: uid(),
-      text: assignee ? `${text} @${assignee}` : text,
-      createdAt: new Date(),
-    });
-
-    state.commentsOpenTaskId = task.id;
-    saveTasks();
-    render();
-    return;
-  }
-
-  if (action === "delete-comment") {
-    const item = target.closest(".task-comment-item");
-    const commentId = item?.getAttribute("data-comment-id");
-    if (!commentId) return;
-
-    const selectedTask = state.tasks.find((it) => it.id === task.id);
-    if (!selectedTask || !Array.isArray(selectedTask.comments)) return;
-
-    selectedTask.comments = selectedTask.comments.filter((comment) => String(comment.id) !== commentId);
-    state.commentsOpenTaskId = task.id;
     saveTasks();
     render();
     return;
@@ -1626,6 +1585,20 @@ function onColumnsListClick(event) {
   if (action === "confirm-delete-column") {
     deleteColumn(columnId);
   }
+}
+
+function countLocalTasksAcrossBoards(boards) {
+  const list = Array.isArray(boards) ? boards : [];
+  return list.reduce((total, board) => {
+    const boardId = String(board?.id || "").trim();
+    if (!boardId) {
+      return total;
+    }
+
+    const tasks = readJson(taskStorageKey(boardId), []);
+    const size = Array.isArray(tasks) ? tasks.length : 0;
+    return total + size;
+  }, 0);
 }
 
 function onColumnsListDragStart(event) {

@@ -37,6 +37,8 @@
                 <button id="settings-change-username" type="button" class="settings-item" aria-label="Alterar usuario">Alterar usuario</button>
                 <button id="board-toggle" type="button" class="settings-item" aria-label="Abrir tabelas">Tabelas</button>
                 <button id="settings-columns-toggle" type="button" class="settings-item" aria-label="Abrir colunas">Colunas</button>
+                <button id="settings-export-backup" type="button" class="settings-item" aria-label="Exportar backup">Exportar backup</button>
+                <button id="settings-import-backup" type="button" class="settings-item" aria-label="Importar backup">Importar backup</button>
               </div>
               <div class="settings-separator"></div>
               <div class="settings-group">
@@ -134,14 +136,11 @@
         </div>
         <div id="columns-danger-slot" class="columns-danger-wrap"></div>
       </div>
-      <div id="boards-backup-section" class="boards-backup">
-        <button id="export-backup-btn" type="button">Exportar backup</button>
-        <button id="import-backup-btn" type="button">Importar backup</button>
-        <input id="backup-file-input" type="file" accept="application/json" hidden />
-      </div>
-      <p id="backup-status" class="backup-status" aria-live="polite"></p>
     </aside>
   </div>
+
+  <input id="backup-file-input" type="file" accept="application/json" hidden />
+  <p id="backup-status" class="backup-status" aria-live="polite" hidden></p>
 
   <div id="task-modal-overlay" class="modal-overlay" hidden>
     <section class="ai-modal" role="dialog" aria-modal="true" aria-labelledby="task-modal-title">
@@ -153,6 +152,10 @@
         <label>
           Título
           <input id="task-edit-title" type="text" maxlength="120" placeholder="Revisar fluxo de caixa" />
+        </label>
+        <label>
+          Descrição
+          <textarea id="task-edit-description" maxlength="500" rows="3" placeholder="Detalhes da tarefa..."></textarea>
         </label>
         <label>
           Categoria

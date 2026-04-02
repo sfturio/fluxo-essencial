@@ -36,6 +36,8 @@
     settingsMenu: document.getElementById("settings-menu"),
     settingsColumnsToggleButton: document.getElementById("settings-columns-toggle"),
     settingsChangeUsernameButton: document.getElementById("settings-change-username"),
+    settingsExportBackupButton: document.getElementById("settings-export-backup"),
+    settingsImportBackupButton: document.getElementById("settings-import-backup"),
     boardToggleButton: document.getElementById("board-toggle"),
 
     boardsOverlay: document.getElementById("boards-overlay"),
@@ -68,6 +70,7 @@
     taskModalCancel: document.getElementById("task-modal-cancel"),
     taskModalSave: document.getElementById("task-modal-save"),
     taskEditTitle: document.getElementById("task-edit-title"),
+    taskEditDescription: document.getElementById("task-edit-description"),
     taskEditCategory: document.getElementById("task-edit-category"),
     taskEditAssignee: document.getElementById("task-edit-assignee"),
     taskEditTags: document.getElementById("task-edit-tags"),

@@ -1888,7 +1888,8 @@ textarea::placeholder {
 }
 
 .task-modal-fields input,
-.task-modal-fields select {
+.task-modal-fields select,
+.task-modal-fields textarea {
   border: none;
   border-radius: 10px;
   background: var(--surface-low);
@@ -1900,7 +1901,8 @@ textarea::placeholder {
 }
 
 .task-modal-fields input:focus,
-.task-modal-fields select:focus {
+.task-modal-fields select:focus,
+.task-modal-fields textarea:focus {
   outline: 1px solid var(--line-soft);
 }
 
