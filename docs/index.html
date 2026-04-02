@@ -255,19 +255,14 @@
           <button id="changelogs-toggle" type="button" class="section-toggle-btn" aria-expanded="false" aria-controls="changelogs-content">Mostrar</button>
           <div id="changelogs-content" hidden>
           <ul>
-            <li><strong>2026-04-02:</strong> ordenacao passou a ser configuravel por coluna (botao <code>↑↓</code> no topo de cada coluna) com modos <code>manual</code>, <code>prioridade</code> e <code>data de inicio</code> + direcao <code>↑/↓</code>.</li>
-            <li><strong>2026-04-02:</strong> drag and drop voltou a respeitar ordem manual quando o modo de ordenacao esta em <code>manual</code>.</li>
-            <li><strong>2026-04-02:</strong> login passou a solicitar <code>username</code> no primeiro acesso (persistido em <code>profiles.username</code>) e o header exibe esse usuario no lugar de "Convidado".</li>
-            <li><strong>2026-04-02:</strong> header refinado com separadores sutis no subtitulo e status de usuario na mesma linha de contexto.</li>
-            <li><strong>2026-04-02:</strong> modo foco atualizado com seletor compacto de coluna no cabecalho (menu <code>&lt;</code>/<code>v</code>), mantendo exibicao de apenas uma coluna por vez.</li>
-            <li><strong>2026-04-02:</strong> no modo foco, botao de recolher coluna ocultado para reduzir ruido visual e evitar acoes desnecessarias.</li>
-            <li><strong>2026-04-02:</strong> sintaxe de coluna alterada de <code>&gt;coluna</code> para <code>[coluna]</code> para melhorar compatibilidade com IA; parser, ajuda rapida e prompt oficial atualizados.</li>
-            <li><strong>2026-04-02:</strong> parser simplificado para priorizar <code>!</code> apenas no inicio e manter metadados (<code>@</code>, <code>#</code>, <code>+</code>) com limpeza correta do titulo.</li>
-            <li><strong>2026-03-29:</strong> arquitetura frontend modularizada em ES Modules (separacao de estado, servicos, UI e features), facilitando manutencao e evolucao.</li>
-            <li><strong>2026-03-29:</strong> Supabase Auth + sincronizacao cloud reativados com modelo escalavel para boards, colunas e tarefas.</li>
-            <li><strong>2026-03-29:</strong> migracao de schema escalavel com RLS completo, tabelas de suporte (<code>columns</code>, <code>task_tags</code>, <code>comments</code>) e politicas por dono do board.</li>
-            <li><strong>2026-03-30:</strong> parser/planner ajustado para criar tarefas padrao quando o input vier vazio em board sem tarefas (evita fluxo morto).</li>
-            <li><strong>2026-03-30 a 2026-04-02:</strong> melhoria da documentacao tecnica (navegacao por anchors, sidebar ativa e copia de blocos de codigo).</li>
+            <li><strong>2026-04-02:</strong> parser de tarefas atualizado para sintaxe simplificada com coluna em <code>[coluna]</code>, prioridade com <code>!</code> no inicio, metadados (<code>@</code>, <code>#</code>, <code>+</code>) e criacao automatica de colunas ausentes.</li>
+            <li><strong>2026-04-02:</strong> ordenacao por coluna consolidada com modos <code>manual</code>, <code>prioridade</code> e <code>data de inicio</code>; drag and drop respeita a ordem manual quando este modo esta ativo.</li>
+            <li><strong>2026-04-02:</strong> modo foco refinado para selecao de coluna com menos ruido visual, mantendo apenas uma coluna visivel por vez.</li>
+            <li><strong>2026-04-02:</strong> fluxo de usuario/login estabilizado com <code>username</code> persistido em <code>profiles.username</code> e exibicao no header apos autenticacao.</li>
+            <li><strong>2026-04-02:</strong> compatibilidade de dados legados reforcada com migracao de IDs de board para UUID antes da sincronizacao cloud.</li>
+            <li><strong>2026-03-29:</strong> arquitetura frontend modularizada em ES Modules (estado, servicos, UI e features) para facilitar manutencao e evolucao.</li>
+            <li><strong>2026-03-29:</strong> base Supabase consolidada com Auth, sincronizacao cloud e RLS para boards, colunas e tarefas.</li>
+            <li><strong>2026-03-30 a 2026-04-02:</strong> documentacao tecnica evoluida com navegacao por anchors, sidebar ativa e secao de changelog colapsavel.</li>
           </ul>
           </div>
         </section>
@@ -298,4 +293,3 @@
   <script type="module" src="./script.js"></script>
 </body>
 </html>
-
