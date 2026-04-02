@@ -458,11 +458,12 @@ async function onUsernameSubmit(event) {
 
   const isConflict = String(error?.code || "") === "23505"
     || /duplicate|unique/i.test(String(error?.message || ""));
+  const reason = String(error?.message || "").trim();
 
   if (dom.usernameError) {
     dom.usernameError.textContent = isConflict
       ? "Esse usuario ja esta em uso. Tente outro."
-      : "Nao foi possivel salvar agora. Tente novamente.";
+      : `Nao foi possivel salvar agora. ${reason || "Tente novamente."}`;
   }
 }
 
