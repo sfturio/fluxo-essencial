@@ -32,7 +32,7 @@ Comandos suportados:
 - `(categoria)` define categoria
 - `@responsavel` define responsavel
 - `#tag` adiciona tag
-- `+data` ou `*data` define data
+- `+data` ou `*data` define data de inicio
 
 Exemplo:
 

@@ -803,11 +803,6 @@ body.dark .task:hover {
   background: color-mix(in srgb, var(--surface-low) 76%, var(--surface-card));
 }
 
-.task.done .task-title {
-  text-decoration: line-through;
-  opacity: 0.52;
-}
-
 .task-actions {
   margin-top: auto;
   padding-top: 0.7rem;

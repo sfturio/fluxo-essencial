@@ -9,7 +9,7 @@ Regras:
   ( ) = categoria
   @ = responsável
   # = tags
-  + = data (DD-MM-AAAA)
+  + = data de inicio (DD-MM-AAAA)
 - Mantenha tarefas curtas
 - Sem explicações
 
