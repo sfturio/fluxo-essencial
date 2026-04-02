@@ -1678,8 +1678,15 @@ body.focus-mode .focus-column-option.active {
 }
 
 .board-actions button[data-action="delete"],
+.board-actions button[data-action="delete-board"],
 .board-actions button[data-action="delete-column"] {
-  color: #8a5757;
+  color: #c86a73;
+}
+
+.board-actions button[data-action="delete-board"]:hover,
+.board-actions button[data-action="delete-column"]:hover {
+  background: color-mix(in srgb, #4a1f26 30%, var(--surface-low));
+  color: #df7f8a;
 }
 
 .board-actions .important-toggle.active {
@@ -1745,7 +1752,7 @@ body.focus-mode .focus-column-option.active {
 }
 
 .board-delete-confirm .danger {
-  color: #8a5757;
+  color: #d77580;
 }
 
 .boards-create {
