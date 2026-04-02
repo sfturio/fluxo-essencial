@@ -385,10 +385,19 @@ function openAuthModal() {
     return;
   }
 
+  const lastEmail = readString(STORAGE_KEYS.AUTH_LAST_EMAIL_KEY, "");
+  if (dom.authEmailInput && lastEmail && !dom.authEmailInput.value) {
+    dom.authEmailInput.value = lastEmail;
+  }
+
   updateAuthModal();
   dom.authModalOverlay.hidden = false;
   updatePageLock(dom);
-  dom.authEmailInput?.focus();
+  if (dom.authEmailInput?.value) {
+    dom.authPasswordInput?.focus();
+  } else {
+    dom.authEmailInput?.focus();
+  }
 }
 
 function closeAuthModal() {
@@ -567,6 +576,7 @@ async function onAuthSubmit(event) {
     return;
   }
 
+  writeString(STORAGE_KEYS.AUTH_LAST_EMAIL_KEY, email);
   shouldPromptUsernameOnNextAuth = true;
   closeAuthModal();
 }

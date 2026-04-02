@@ -8,6 +8,7 @@ export const STORAGE_KEYS = {
   THEME_KEY: "kanban.theme.v1",
   FOCUS_KEY: "kanban.focus.v1",
   INITIAL_SAMPLE_KEY: "kanban.initial-sample-seeded.v1",
+  AUTH_LAST_EMAIL_KEY: "kanban.auth.last-email.v1",
 };
 
 export const DEFAULT_COLUMNS = [

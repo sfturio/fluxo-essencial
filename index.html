@@ -221,11 +221,11 @@
       <form id="auth-form" class="auth-form">
         <label>
           E-mail
-          <input id="auth-email" type="email" placeholder="voce@email.com" required />
+          <input id="auth-email" type="email" placeholder="voce@email.com" autocomplete="email" required />
         </label>
         <label>
           Senha
-          <input id="auth-password" type="password" placeholder="••••••••" minlength="6" required />
+          <input id="auth-password" type="password" placeholder="••••••••" autocomplete="current-password" minlength="6" required />
         </label>
         <p id="auth-error" class="auth-error" aria-live="polite"></p>
       </form>
