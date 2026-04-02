@@ -178,6 +178,26 @@ h1 {
   padding-left: 1.1rem;
 }
 
+.section-toggle-btn {
+  border: 1px solid color-mix(in srgb, var(--line-soft) 66%, transparent);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--surface-low) 80%, var(--surface-card));
+  color: color-mix(in srgb, var(--text) 88%, var(--text-muted));
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.44rem 0.6rem;
+  cursor: pointer;
+  margin-top: 0.15rem;
+}
+
+.section-toggle-btn:hover {
+  background: color-mix(in srgb, var(--surface-low) 66%, var(--surface-card));
+  border-color: color-mix(in srgb, var(--accent-soft) 48%, var(--line-soft));
+  color: var(--text);
+}
+
 .code-wrap {
   position: relative;
 }

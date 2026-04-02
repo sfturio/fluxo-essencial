@@ -1626,6 +1626,41 @@ body.focus-mode .focus-column-option.active {
   max-height: 28vh;
 }
 
+.columns-danger-wrap {
+  margin-top: 0.45rem;
+}
+
+.columns-danger-btn {
+  width: 100%;
+  border: none;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--surface-low) 90%, var(--surface-card));
+  color: #8a5757;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 650;
+  padding: 0.45rem 0.55rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.columns-danger-btn:hover {
+  background: color-mix(in srgb, var(--surface-low) 76%, var(--surface-card));
+}
+
+.columns-danger-confirm {
+  margin-top: 0;
+  justify-content: flex-start;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.columns-danger-confirm span {
+  font-size: 0.76rem;
+  color: color-mix(in srgb, var(--text) 78%, var(--text-muted));
+  margin-right: 0.15rem;
+}
+
 .boards-create input,
 .boards-create button {
   border: none;

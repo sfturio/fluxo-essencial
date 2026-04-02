@@ -12,6 +12,8 @@
   deleteConfirmBoardId: null,
   editingColumnId: null,
   deleteConfirmColumnId: null,
+  deleteConfirmAllColumnsBoardId: null,
+  deleteConfirmAllColumnsStep: 0,
   clearConfirmColumn: null,
   boardsPanelMode: "tables",
   collapsedColumnsByBoard: {},

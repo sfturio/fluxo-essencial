@@ -26,7 +26,7 @@
     <div class="doc-layout">
       <aside class="doc-sidebar">
         <nav class="doc-nav" aria-label="Navegacao da documentacao">
-          <a href="#top">Visao Geral</a>
+          <a href="#overview">Visao Geral</a>
           <a href="#architecture">Arquitetura</a>
           <a href="#stack">Stack Tecnologica</a>
           <a href="#core-features">Funcionalidades</a>
@@ -252,6 +252,8 @@
         <section id="changelogs" class="doc-card">
           <h2>12. Changelogs</h2>
           <p>Historico resumido com foco apenas nos marcos que mudaram a base do produto.</p>
+          <button id="changelogs-toggle" type="button" class="section-toggle-btn" aria-expanded="false" aria-controls="changelogs-content">Mostrar</button>
+          <div id="changelogs-content" hidden>
           <ul>
             <li><strong>2026-04-02:</strong> ordenacao passou a ser configuravel por coluna (botao <code>↑↓</code> no topo de cada coluna) com modos <code>manual</code>, <code>prioridade</code> e <code>data de inicio</code> + direcao <code>↑/↓</code>.</li>
             <li><strong>2026-04-02:</strong> drag and drop voltou a respeitar ordem manual quando o modo de ordenacao esta em <code>manual</code>.</li>
@@ -267,6 +269,7 @@
             <li><strong>2026-03-30:</strong> parser/planner ajustado para criar tarefas padrao quando o input vier vazio em board sem tarefas (evita fluxo morto).</li>
             <li><strong>2026-03-30 a 2026-04-02:</strong> melhoria da documentacao tecnica (navegacao por anchors, sidebar ativa e copia de blocos de codigo).</li>
           </ul>
+          </div>
         </section>
         <section id="roadmap" class="doc-card">
           <h2>13. Roadmap</h2>

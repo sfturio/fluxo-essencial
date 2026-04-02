@@ -34,6 +34,7 @@
             <div id="settings-menu" class="settings-menu" hidden>
               <div class="settings-group">
                 <p class="settings-title">Kanban</p>
+                <button id="settings-change-username" type="button" class="settings-item" aria-label="Alterar usuario">Alterar usuario</button>
                 <button id="board-toggle" type="button" class="settings-item" aria-label="Abrir tabelas">Tabelas</button>
                 <button id="settings-columns-toggle" type="button" class="settings-item" aria-label="Abrir colunas">Colunas</button>
               </div>
@@ -235,6 +236,26 @@
       <div class="ai-modal-actions">
         <button id="auth-cancel-btn" type="button" class="secondary">Cancelar</button>
         <button id="auth-submit-btn" type="button" class="primary">Entrar</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="username-modal-overlay" class="modal-overlay" hidden>
+    <section class="ai-modal" role="dialog" aria-modal="true" aria-labelledby="username-modal-title">
+      <div class="ai-modal-head">
+        <h2 id="username-modal-title">Escolha seu usuário</h2>
+      </div>
+      <p id="username-modal-subtitle">Defina um usuário para aparecer no seu perfil.</p>
+      <form id="username-form" class="auth-form">
+        <label>
+          Usuário
+          <input id="username-input" type="text" maxlength="24" placeholder="ex: wesley.dev" required />
+        </label>
+        <p id="username-error" class="auth-error" aria-live="polite"></p>
+      </form>
+      <div class="ai-modal-actions">
+        <button id="username-skip-btn" type="button" class="secondary">Agora não</button>
+        <button id="username-save-btn" type="button" class="primary">Salvar usuário</button>
       </div>
     </section>
   </div>

@@ -7,6 +7,7 @@ const themeLabel = document.getElementById("theme-label");
 initTheme();
 setupCopyButtons();
 setupActiveSectionNav();
+setupChangelogToggle();
 
 themeToggleButton?.addEventListener("click", toggleTheme);
 
@@ -69,45 +70,88 @@ function setupCopyButtons() {
 
 function setupActiveSectionNav() {
   const links = Array.from(document.querySelectorAll('.doc-nav a[href^="#"]'));
-  const topTarget = document.getElementById("top");
-  const topLink = links.find((link) => link.getAttribute("href") === "#top");
-  const sections = links
-    .filter((link) => link.getAttribute("href") !== "#top")
-    .map((link) => document.querySelector(link.getAttribute("href")))
+  if (links.length === 0) return;
+  let lockedActiveLink = null;
+  let unlockTimerId = null;
+
+  const bySection = links
+    .map((link) => {
+      const selector = link.getAttribute("href");
+      if (!selector) return null;
+      const section = document.querySelector(selector);
+      if (!section) return null;
+      return { link, section };
+    })
     .filter(Boolean);
 
-  if (topTarget && topLink) {
-    const topObserver = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          links.forEach((l) => l.classList.remove("active"));
-          topLink.classList.add("active");
-        }
-      },
-      { rootMargin: "-5% 0px -85% 0px", threshold: 0 },
-    );
+  if (bySection.length === 0) return;
 
-    topObserver.observe(topTarget);
+  function setActive(targetLink) {
+    links.forEach((l) => l.classList.remove("active"));
+    targetLink.classList.add("active");
   }
 
-  if (sections.length === 0) return;
+  function updateActiveByScroll() {
+    if (lockedActiveLink) return;
 
-  const byId = new Map(links.map((link) => [link.getAttribute("href")?.slice(1), link]));
+    const offset = 140;
+    let active = bySection[0];
 
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        const id = entry.target.id;
-        const link = byId.get(id);
-        if (!link) return;
-        if (entry.isIntersecting) {
-          links.forEach((l) => l.classList.remove("active"));
-          link.classList.add("active");
-        }
-      });
-    },
-    { rootMargin: "-35% 0px -55% 0px", threshold: 0 },
-  );
+    bySection.forEach((entry) => {
+      const top = entry.section.getBoundingClientRect().top;
+      if (top - offset <= 0) {
+        active = entry;
+      }
+    });
 
-  sections.forEach((section) => observer.observe(section));
+    if (active) setActive(active.link);
+  }
+
+  function lockActive(link) {
+    lockedActiveLink = link;
+    if (unlockTimerId) {
+      clearTimeout(unlockTimerId);
+    }
+    unlockTimerId = setTimeout(() => {
+      lockedActiveLink = null;
+      updateActiveByScroll();
+    }, 900);
+  }
+
+  links.forEach((link) => {
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      setActive(link);
+      lockActive(link);
+
+      const selector = link.getAttribute("href");
+      if (!selector) return;
+      const target = document.querySelector(selector);
+      if (!target) return;
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+
+  window.addEventListener("scrollend", () => {
+    if (!lockedActiveLink) return;
+    lockedActiveLink = null;
+    updateActiveByScroll();
+  });
+
+  window.addEventListener("scroll", updateActiveByScroll, { passive: true });
+  updateActiveByScroll();
+}
+
+function setupChangelogToggle() {
+  const button = document.getElementById("changelogs-toggle");
+  const content = document.getElementById("changelogs-content");
+  if (!button || !content) return;
+
+  button.addEventListener("click", () => {
+    const expanded = button.getAttribute("aria-expanded") === "true";
+    const nextExpanded = !expanded;
+    button.setAttribute("aria-expanded", String(nextExpanded));
+    button.textContent = nextExpanded ? "Ocultar" : "Mostrar";
+    content.hidden = !nextExpanded;
+  });
 }

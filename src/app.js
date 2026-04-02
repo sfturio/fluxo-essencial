@@ -1,4 +1,4 @@
-import { KANBAN_PROMPT_TEMPLATE } from "./config/kanban.prompt.js";
+﻿import { KANBAN_PROMPT_TEMPLATE } from "./config/kanban.prompt.js";
 import { getAppState } from "./state/app.state.js";
 import {
   getBoards,
@@ -78,6 +78,7 @@ const dom = getDom();
 let authMode = "signin";
 let cloudSyncTimer = null;
 let isApplyingCloudSnapshot = false;
+let usernamePromptResolver = null;
 
 boot();
 
@@ -129,10 +130,17 @@ function bindEvents() {
   dom.authModalOverlay?.addEventListener("click", (event) => {
     if (event.target === dom.authModalOverlay) closeAuthModal();
   });
+  dom.usernameForm?.addEventListener("submit", onUsernameSubmit);
+  dom.usernameSaveButton?.addEventListener("click", onUsernameSubmit);
+  dom.usernameSkipButton?.addEventListener("click", onUsernameSkip);
+  dom.usernameModalOverlay?.addEventListener("click", (event) => {
+    if (event.target === dom.usernameModalOverlay) onUsernameSkip();
+  });
 
   dom.settingsToggleButton?.addEventListener("click", (event) => toggleSettingsMenu(dom, event));
   dom.boardToggleButton?.addEventListener("click", () => toggleBoardsPanel("tables"));
   dom.settingsColumnsToggleButton?.addEventListener("click", () => toggleBoardsPanel("columns"));
+  dom.settingsChangeUsernameButton?.addEventListener("click", onChangeUsernameClick);
   dom.themeToggleButton?.addEventListener("click", () => toggleTheme(dom));
   dom.focusToggleButton?.addEventListener("click", onToggleFocusMode);
 
@@ -212,6 +220,8 @@ async function initAuth() {
     return;
   }
 
+  updateChangeUsernameButtonLabel("");
+
   try {
     await initAuthSession({
       onAuthChange: async (user) => {
@@ -223,6 +233,7 @@ async function initAuth() {
     dom.authToggleButton.textContent = "Entrar";
     dom.authToggleButton.title = "Autenticação indisponível";
     setAuthStatus("Convidado");
+    updateChangeUsernameButtonLabel("");
   }
 }
 
@@ -232,18 +243,36 @@ function setAuthStatus(text) {
   }
 }
 
+function updateChangeUsernameButtonLabel(username) {
+  if (!dom.settingsChangeUsernameButton) {
+    return;
+  }
+
+  const normalized = normalizeUsername(username || "");
+  const label = normalized ? `@${normalized}` : "Usuario";
+  dom.settingsChangeUsernameButton.innerHTML = `
+    <span>${label}</span>
+    <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+  `;
+}
+
 async function handleAuthState(user) {
   if (dom.authToggleButton) {
     dom.authToggleButton.textContent = user ? "Sair" : "Entrar";
   }
 
   if (!user) {
+    if (!dom.usernameModalOverlay.hidden) {
+      resolveUsernamePrompt("");
+    }
     setAuthStatus("Convidado");
+    updateChangeUsernameButtonLabel("");
     return;
   }
 
   const username = await ensureOwnUsername();
   setAuthStatus(username || user.email || "Convidado");
+  updateChangeUsernameButtonLabel(username || "");
 
   const pulled = await pullCloudToLocal();
   if (!pulled) {
@@ -265,34 +294,7 @@ async function ensureOwnUsername() {
     return current;
   }
 
-  while (true) {
-    const input = window.prompt("Escolha um usuário (3-24 caracteres: letras, números, . _ -):", "");
-    if (input === null) {
-      return "";
-    }
-
-    const candidate = normalizeUsername(input);
-    if (!isValidUsername(candidate)) {
-      window.alert("Usuário inválido. Use 3-24 caracteres: letras, números, ponto, underscore ou hífen.");
-      continue;
-    }
-
-    const { data, error } = await saveOwnUsername(candidate);
-    if (!error) {
-      return normalizeUsername(data?.username || candidate);
-    }
-
-    const isConflict = String(error?.code || "") === "23505"
-      || /duplicate|unique/i.test(String(error?.message || ""));
-
-    if (isConflict) {
-      window.alert("Esse usuário já está em uso. Tente outro.");
-      continue;
-    }
-
-    window.alert("Não foi possível salvar o usuário agora.");
-    return "";
-  }
+  return await requestUsernameInClient();
 }
 
 function normalizeUsername(value) {
@@ -316,6 +318,40 @@ function onAuthToggleClick() {
   openAuthModal();
 }
 
+async function onChangeUsernameClick() {
+  closeSettingsMenu(dom);
+
+  const user = getCurrentUser();
+  if (!user) {
+    openAuthModal();
+    if (dom.authError) {
+      dom.authError.textContent = "Entre para alterar seu usuario.";
+    }
+    return;
+  }
+
+  let current = "";
+  try {
+    const profile = await fetchOwnProfile();
+    current = normalizeUsername(profile?.username || "");
+  } catch {
+    current = "";
+  }
+
+  const next = await requestUsernameInClient({
+    title: "Alterar usuario",
+    subtitle: "Atualize o nome de usuario exibido no cabecalho.",
+    submitLabel: "Salvar alteracao",
+    skipLabel: "Cancelar",
+    initialValue: current,
+  });
+
+  if (next) {
+    setAuthStatus(next);
+    updateChangeUsernameButtonLabel(next);
+  }
+}
+
 function openAuthModal() {
   if (!dom.authModalOverlay) {
     return;
@@ -333,6 +369,105 @@ function closeAuthModal() {
     dom.authError.textContent = "";
   }
   updatePageLock(dom);
+}
+
+async function requestUsernameInClient(options = {}) {
+  if (!dom.usernameModalOverlay || !dom.usernameInput) {
+    return "";
+  }
+
+  const title = String(options.title || "Escolha seu usuario");
+  const subtitle = String(options.subtitle || "Defina um usuario para aparecer no seu perfil.");
+  const submitLabel = String(options.submitLabel || "Salvar usuario");
+  const skipLabel = String(options.skipLabel || "Agora nao");
+  const initialValue = String(options.initialValue || "");
+
+  if (dom.usernameError) {
+    dom.usernameError.textContent = "";
+  }
+
+  if (dom.usernameModalTitle) {
+    dom.usernameModalTitle.textContent = title;
+  }
+
+  if (dom.usernameModalSubtitle) {
+    dom.usernameModalSubtitle.textContent = subtitle;
+  }
+
+  if (dom.usernameSaveButton) {
+    dom.usernameSaveButton.textContent = submitLabel;
+  }
+
+  if (dom.usernameSkipButton) {
+    dom.usernameSkipButton.textContent = skipLabel;
+  }
+
+  dom.usernameInput.value = initialValue;
+  dom.usernameModalOverlay.hidden = false;
+  updatePageLock(dom);
+
+  setTimeout(() => {
+    dom.usernameInput?.focus();
+  }, 0);
+
+  return await new Promise((resolve) => {
+    usernamePromptResolver = resolve;
+  });
+}
+
+function closeUsernameModal() {
+  if (!dom.usernameModalOverlay) {
+    return;
+  }
+
+  dom.usernameModalOverlay.hidden = true;
+  if (dom.usernameError) {
+    dom.usernameError.textContent = "";
+  }
+  updatePageLock(dom);
+}
+
+function resolveUsernamePrompt(value) {
+  const resolver = usernamePromptResolver;
+  usernamePromptResolver = null;
+  closeUsernameModal();
+  if (resolver) {
+    resolver(value || "");
+  }
+}
+
+async function onUsernameSubmit(event) {
+  event?.preventDefault();
+
+  const raw = dom.usernameInput?.value || "";
+  const candidate = normalizeUsername(raw);
+
+  if (!isValidUsername(candidate)) {
+    if (dom.usernameError) {
+      dom.usernameError.textContent = "Use 3-24 caracteres: letras, numeros, ponto, underscore ou hifen.";
+    }
+    dom.usernameInput?.focus();
+    return;
+  }
+
+  const { data, error } = await saveOwnUsername(candidate);
+  if (!error) {
+    resolveUsernamePrompt(normalizeUsername(data?.username || candidate));
+    return;
+  }
+
+  const isConflict = String(error?.code || "") === "23505"
+    || /duplicate|unique/i.test(String(error?.message || ""));
+
+  if (dom.usernameError) {
+    dom.usernameError.textContent = isConflict
+      ? "Esse usuario ja esta em uso. Tente outro."
+      : "Nao foi possivel salvar agora. Tente novamente.";
+  }
+}
+
+function onUsernameSkip() {
+  resolveUsernamePrompt("");
 }
 
 function toggleAuthMode() {
@@ -708,6 +843,7 @@ function render() {
     dom,
     state,
     activeColumns: getActiveColumns(),
+    activeBoardId: getActiveBoardId(),
   });
 
   renderBoardColumns({
@@ -954,8 +1090,9 @@ function resolveOrCreateColumnId(columnName) {
   }
 
   const requestedName = normalizeSpaces(columnName || "");
-  const fallbackName = "Próximos";
-  const desiredName = requestedName || fallbackName;
+  if (!requestedName) {
+    return board.columns[0]?.id || getPrimaryColumnId();
+  }
 
   const findByName = (name) => {
     const key = normalizeColumnKey(name);
@@ -963,16 +1100,13 @@ function resolveOrCreateColumnId(columnName) {
     return board.columns.find((column) => normalizeColumnKey(column.name) === key) || null;
   };
 
-  let found = findByName(desiredName);
-  if (!found && !requestedName) {
-    found = findByName("Proximos");
-  }
+  const found = findByName(requestedName);
 
   if (found) {
     return found.id;
   }
 
-  const newColumn = createColumn(desiredName, board.columns);
+  const newColumn = createColumn(requestedName, board.columns);
   board.columns = [...normalizeBoardColumns(board.columns), newColumn];
   saveBoards();
   return newColumn.id;
@@ -1123,6 +1257,8 @@ function closeBoardsPanel() {
   state.deleteConfirmBoardId = null;
   state.editingColumnId = null;
   state.deleteConfirmColumnId = null;
+  state.deleteConfirmAllColumnsBoardId = null;
+  state.deleteConfirmAllColumnsStep = 0;
   updatePageLock(dom);
 }
 
@@ -1245,8 +1381,45 @@ function onColumnsListClick(event) {
   }
 
   const action = target.dataset.action;
+  if (!action) {
+    return;
+  }
+
+  if (action === "delete-all-columns") {
+    state.editingColumnId = null;
+    state.deleteConfirmColumnId = null;
+    if (state.deleteConfirmAllColumnsBoardId === state.activeBoardId) {
+      state.deleteConfirmAllColumnsBoardId = null;
+      state.deleteConfirmAllColumnsStep = 0;
+    } else {
+      state.deleteConfirmAllColumnsBoardId = state.activeBoardId;
+      state.deleteConfirmAllColumnsStep = 1;
+    }
+    render();
+    return;
+  }
+
+  if (action === "proceed-delete-all-columns") {
+    state.deleteConfirmAllColumnsBoardId = state.activeBoardId;
+    state.deleteConfirmAllColumnsStep = 2;
+    render();
+    return;
+  }
+
+  if (action === "cancel-delete-all-columns") {
+    state.deleteConfirmAllColumnsBoardId = null;
+    state.deleteConfirmAllColumnsStep = 0;
+    render();
+    return;
+  }
+
+  if (action === "confirm-delete-all-columns") {
+    deleteAllColumns();
+    return;
+  }
+
   const columnId = target.dataset.columnId;
-  if (!action || !columnId) {
+  if (!columnId) {
     return;
   }
 
@@ -1290,6 +1463,8 @@ function onColumnsListClick(event) {
 
   if (action === "delete-column") {
     state.editingColumnId = null;
+    state.deleteConfirmAllColumnsBoardId = null;
+    state.deleteConfirmAllColumnsStep = 0;
     state.deleteConfirmColumnId = state.deleteConfirmColumnId === columnId ? null : columnId;
     render();
     return;
@@ -1320,6 +1495,8 @@ function switchBoard(boardId) {
   state.deleteConfirmTaskId = null;
   state.commentsOpenTaskId = null;
   state.clearConfirmColumn = null;
+  state.deleteConfirmAllColumnsBoardId = null;
+  state.deleteConfirmAllColumnsStep = 0;
 
   render();
 }
@@ -1376,6 +1553,28 @@ function deleteColumn(columnId) {
   saveBoards();
   saveTasks();
 
+  state.deleteConfirmColumnId = null;
+  state.deleteConfirmAllColumnsBoardId = null;
+  state.deleteConfirmAllColumnsStep = 0;
+  state.editingColumnId = null;
+  state.clearConfirmColumn = null;
+  render();
+}
+
+function deleteAllColumns() {
+  const board = getActiveBoard();
+  if (!board) {
+    return;
+  }
+
+  board.columns = [createColumn("Proximos", [])];
+  state.tasks = [];
+
+  saveBoards();
+  saveTasks();
+
+  state.deleteConfirmAllColumnsBoardId = null;
+  state.deleteConfirmAllColumnsStep = 0;
   state.deleteConfirmColumnId = null;
   state.editingColumnId = null;
   state.clearConfirmColumn = null;
@@ -1538,6 +1737,11 @@ function onGlobalKeydown(event) {
       return;
     }
 
+    if (!dom.usernameModalOverlay.hidden) {
+      onUsernameSkip();
+      return;
+    }
+
     if (!dom.authModalOverlay.hidden) {
       closeAuthModal();
       return;
@@ -1696,4 +1900,6 @@ function setBackupStatus(message) {
     dom.backupStatus.textContent = "";
   }, 2200);
 }
+
+
 

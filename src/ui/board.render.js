@@ -51,7 +51,7 @@ export function renderBoardsPanel({ dom, state, boards, activeBoardId }) {
   });
 }
 
-export function renderColumnsPanel({ dom, state, activeColumns }) {
+export function renderColumnsPanel({ dom, state, activeColumns, activeBoardId }) {
   if (!dom.columnsList) {
     return;
   }
@@ -96,6 +96,27 @@ export function renderColumnsPanel({ dom, state, activeColumns }) {
 
     dom.columnsList.appendChild(wrapper);
   });
+
+  const actions = document.createElement("div");
+  actions.className = "columns-danger-wrap";
+  const isConfirming = state.deleteConfirmAllColumnsBoardId === activeBoardId;
+  const isFinalStep = isConfirming && state.deleteConfirmAllColumnsStep === 2;
+
+  if (isConfirming) {
+    actions.innerHTML = `
+      <div class="board-delete-confirm columns-danger-confirm">
+        <span>${isFinalStep ? "Ultima confirmacao: excluir tudo desta tabela?" : "Tem certeza? Isso remove todas as colunas e tarefas."}</span>
+        <button type="button" class="danger" data-action="${isFinalStep ? "confirm-delete-all-columns" : "proceed-delete-all-columns"}">${isFinalStep ? "Excluir tudo" : "Continuar"}</button>
+        <button type="button" data-action="cancel-delete-all-columns">Cancelar</button>
+      </div>
+    `;
+  } else {
+    actions.innerHTML = `
+      <button type="button" class="columns-danger-btn" data-action="delete-all-columns">Excluir todas as colunas</button>
+    `;
+  }
+
+  dom.columnsList.appendChild(actions);
 }
 
 export function renderBoardColumns({ dom, state, tasks, activeColumns, context }) {
