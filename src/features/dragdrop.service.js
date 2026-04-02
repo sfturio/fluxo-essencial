@@ -1,4 +1,4 @@
-﻿export function setupDropZones({
+export function setupDropZones({
   boardElement,
   getDraggingTaskId,
   setDragOverListId,
@@ -37,7 +37,7 @@
       event.preventDefault();
       taskList.classList.remove("drag-over", "drop-at-end");
       const draggedId = getDraggingTaskId() || event.dataTransfer?.getData("text/plain");
-      if (!draggedId) {
+      if (!draggedId || draggedId.startsWith("column:")) {
         return;
       }
 
@@ -69,7 +69,7 @@
       taskList.classList.remove("drag-over", "drop-at-end");
 
       const draggedId = getDraggingTaskId() || event.dataTransfer?.getData("text/plain");
-      if (!draggedId) {
+      if (!draggedId || draggedId.startsWith("column:")) {
         return;
       }
 
@@ -78,6 +78,92 @@
       clearDropIndicators(boardElement);
     });
   });
+}
+
+export function setupColumnDropZones({
+  boardElement,
+  getDraggingColumnId,
+  setDraggingColumnId,
+  moveColumnByDrop,
+}) {
+  const columns = Array.from(boardElement?.querySelectorAll(".column") || []);
+
+  columns.forEach((columnElement) => {
+    const columnId = columnElement.dataset.column;
+    const columnHead = columnElement.querySelector(".column-head");
+    if (!columnId || !(columnHead instanceof HTMLElement)) {
+      return;
+    }
+
+    columnHead.classList.add("column-drag-handle");
+    columnHead.draggable = true;
+
+    columnHead.addEventListener("dragstart", (event) => {
+      const target = event.target;
+      if (target instanceof Element && target.closest(".column-controls")) {
+        event.preventDefault();
+        return;
+      }
+
+      setDraggingColumnId(columnId);
+      document.body.classList.add("drag-scroll-main-only");
+      columnElement.classList.add("column-dragging");
+
+      if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", `column:${columnId}`);
+      }
+    });
+
+    columnHead.addEventListener("dragend", () => {
+      setDraggingColumnId(null);
+      document.body.classList.remove("drag-scroll-main-only");
+      clearColumnDropIndicators(boardElement);
+      columnElement.classList.remove("column-dragging");
+    });
+
+    columnElement.addEventListener("dragover", (event) => {
+      const data = event.dataTransfer?.getData("text/plain") || "";
+      const draggedId = getDraggingColumnId() || (data.startsWith("column:") ? data.slice("column:".length) : "");
+      if (!draggedId || draggedId === columnId) {
+        return;
+      }
+
+      event.preventDefault();
+      clearColumnDropIndicators(boardElement);
+      const shouldInsertBefore = shouldInsertColumnBefore(columnElement, event.clientY);
+      columnElement.classList.add(shouldInsertBefore ? "column-drop-before" : "column-drop-after");
+      columnElement.dataset.dropPosition = shouldInsertBefore ? "before" : "after";
+    });
+
+    columnElement.addEventListener("dragleave", (event) => {
+      const related = event.relatedTarget;
+      if (related instanceof Node && columnElement.contains(related)) {
+        return;
+      }
+
+      columnElement.classList.remove("column-drop-before", "column-drop-after");
+      columnElement.dataset.dropPosition = "";
+    });
+
+    columnElement.addEventListener("drop", (event) => {
+      const data = event.dataTransfer?.getData("text/plain") || "";
+      const draggedId = getDraggingColumnId() || (data.startsWith("column:") ? data.slice("column:".length) : "");
+      if (!draggedId || draggedId === columnId) {
+        return;
+      }
+
+      event.preventDefault();
+      const position = columnElement.dataset.dropPosition === "before" ? "before" : "after";
+      clearColumnDropIndicators(boardElement);
+      moveColumnByDrop(draggedId, columnId, position);
+    });
+  });
+}
+
+function shouldInsertColumnBefore(columnElement, cursorY) {
+  const rect = columnElement.getBoundingClientRect();
+  return cursorY < rect.top + rect.height / 2;
 }
 
 export function updateDropIndicator(taskList, cursorY) {
@@ -111,5 +197,12 @@ export function clearDropIndicators(boardElement) {
     list.classList.remove("drag-over", "drop-at-end");
     list.dataset.dropBeforeId = "";
     clearCardIndicators(list);
+  });
+}
+
+export function clearColumnDropIndicators(boardElement) {
+  boardElement?.querySelectorAll(".column").forEach((column) => {
+    column.classList.remove("column-drop-before", "column-drop-after", "column-dragging");
+    column.dataset.dropPosition = "";
   });
 }

@@ -62,6 +62,7 @@ export function renderColumnsPanel({ dom, state, activeColumns, activeBoardId })
     const wrapper = document.createElement("div");
     wrapper.className = "board-item";
     wrapper.dataset.columnId = column.id;
+    wrapper.draggable = state.editingColumnId !== column.id;
 
     const canDelete = activeColumns.length > 1;
     const baseHtml = state.editingColumnId === column.id
@@ -213,6 +214,7 @@ export function renderBoardColumns({ dom, state, tasks, activeColumns, context }
   });
 
   updateColumnTaskScrollLimits(dom.boardElement);
+  updateColumnMasonrySpans(dom.boardElement);
 }
 
 export function updateColumnTaskScrollLimits(boardElement) {
@@ -250,6 +252,31 @@ export function updateColumnTaskScrollLimits(boardElement) {
     const totalHeight = firstTen.reduce((sum, card) => sum + card.offsetHeight, 0);
     const gap = firstTen.length > 1 ? (firstTen.length - 1) * 11.52 : 0;
     taskList.style.maxHeight = `${Math.ceil(totalHeight + gap + 4)}px`;
+  });
+}
+
+export function updateColumnMasonrySpans(boardElement) {
+  if (!boardElement) {
+    return;
+  }
+
+  const boardStyle = window.getComputedStyle(boardElement);
+  const rowSize = Number.parseFloat(boardStyle.gridAutoRows || "0");
+  const gap = Number.parseFloat(boardStyle.rowGap || "0");
+
+  if (!rowSize || rowSize <= 1) {
+    boardElement.querySelectorAll(".column").forEach((column) => {
+      column.style.removeProperty("--column-row-span");
+    });
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    boardElement.querySelectorAll(".column").forEach((column) => {
+      const columnHeight = column.getBoundingClientRect().height;
+      const span = Math.max(1, Math.ceil((columnHeight + gap) / (rowSize + gap)));
+      column.style.setProperty("--column-row-span", String(span));
+    });
   });
 }
 

@@ -3,6 +3,7 @@
   activeBoardId: null,
   tasks: [],
   draggingTaskId: null,
+  draggingColumnId: null,
   dragOverListId: null,
   editingTaskId: null,
   modalEditingTaskId: null,

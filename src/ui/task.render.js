@@ -200,6 +200,7 @@ export function createTaskElement(task, context) {
 
   card.addEventListener("dragstart", (event) => {
     state.draggingTaskId = task.id;
+    document.body.classList.add("drag-scroll-main-only");
     card.classList.add("dragging");
 
     if (event.dataTransfer) {
@@ -211,6 +212,7 @@ export function createTaskElement(task, context) {
   card.addEventListener("dragend", () => {
     state.draggingTaskId = null;
     state.dragOverListId = null;
+    document.body.classList.remove("drag-scroll-main-only");
     card.classList.remove("dragging");
     actions.clearDropIndicators();
   });

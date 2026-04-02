@@ -57,7 +57,10 @@ import {
 } from "./ui/modal.ui.js";
 import { initTheme, toggleTheme, applyTheme } from "./features/theme.service.js";
 import { initFocusMode, toggleFocusMode, applyFocusMode } from "./features/focus.service.js";
-import { setupDropZones, clearDropIndicators } from "./features/dragdrop.service.js";
+import {
+  setupDropZones,
+  clearDropIndicators,
+} from "./features/dragdrop.service.js";
 import { buildBackupPayload, applyBackupData } from "./features/backup.service.js";
 import {
   initAuthSession,
@@ -173,6 +176,10 @@ function bindEvents() {
 
   dom.boardsList?.addEventListener("click", onBoardsListClick);
   dom.columnsList?.addEventListener("click", onColumnsListClick);
+  dom.columnsList?.addEventListener("dragstart", onColumnsListDragStart);
+  dom.columnsList?.addEventListener("dragover", onColumnsListDragOver);
+  dom.columnsList?.addEventListener("drop", onColumnsListDrop);
+  dom.columnsList?.addEventListener("dragend", onColumnsListDragEnd);
   dom.columnsDangerSlot?.addEventListener("click", onColumnsListClick);
 
   dom.boardElement?.addEventListener("click", onBoardClick);
@@ -181,7 +188,9 @@ function bindEvents() {
   document.addEventListener("click", onDocumentClick);
   document.addEventListener("visibilitychange", onVisibilityChange);
 
-  document.addEventListener("wheel", onAppWheel, { passive: false });
+  document.addEventListener("wheel", onAppWheel, { passive: false, capture: true });
+  window.addEventListener("wheel", onAppWheel, { passive: false, capture: true });
+  window.addEventListener("mousewheel", onLegacyMouseWheel, { passive: false, capture: true });
 }
 
 function loadTasksForBoard(boardId) {
@@ -1187,6 +1196,36 @@ function onMoveTaskByDrop(draggedId, targetColumnId, beforeTaskId) {
   render();
 }
 
+function onMoveColumnByDrop(draggedColumnId, targetColumnId, position) {
+  const board = getActiveBoard();
+  if (!board || !Array.isArray(board.columns)) {
+    return;
+  }
+
+  const columns = [...board.columns];
+  const fromIndex = columns.findIndex((column) => column.id === draggedColumnId);
+  const targetIndex = columns.findIndex((column) => column.id === targetColumnId);
+  if (fromIndex < 0 || targetIndex < 0 || fromIndex === targetIndex) {
+    state.draggingColumnId = null;
+    return;
+  }
+
+  const [movedColumn] = columns.splice(fromIndex, 1);
+  const targetIndexAfterRemoval = columns.findIndex((column) => column.id === targetColumnId);
+  if (targetIndexAfterRemoval < 0) {
+    columns.push(movedColumn);
+  } else if (position === "before") {
+    columns.splice(targetIndexAfterRemoval, 0, movedColumn);
+  } else {
+    columns.splice(targetIndexAfterRemoval + 1, 0, movedColumn);
+  }
+
+  board.columns = columns;
+  state.draggingColumnId = null;
+  saveBoards();
+  render();
+}
+
 function normalizeColumnKey(name) {
   return normalizeSpaces(name).toLowerCase();
 }
@@ -1589,6 +1628,103 @@ function onColumnsListClick(event) {
   }
 }
 
+function onColumnsListDragStart(event) {
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+
+  const item = target.closest(".board-item[data-column-id]");
+  if (!(item instanceof HTMLElement)) {
+    return;
+  }
+
+  const columnId = item.dataset.columnId;
+  if (!columnId) {
+    return;
+  }
+
+  if (target.closest(".board-actions") || state.editingColumnId === columnId) {
+    event.preventDefault();
+    return;
+  }
+
+  state.draggingColumnId = columnId;
+  document.body.classList.add("drag-scroll-main-only");
+  item.classList.add("column-panel-dragging");
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", `column:${columnId}`);
+  }
+}
+
+function onColumnsListDragOver(event) {
+  const draggingId = state.draggingColumnId;
+  if (!draggingId) {
+    return;
+  }
+
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+
+  const item = target.closest(".board-item[data-column-id]");
+  if (!(item instanceof HTMLElement)) {
+    return;
+  }
+
+  const targetColumnId = item.dataset.columnId;
+  if (!targetColumnId || targetColumnId === draggingId) {
+    return;
+  }
+
+  event.preventDefault();
+  clearColumnsPanelDropIndicators();
+  const rect = item.getBoundingClientRect();
+  const before = event.clientY < rect.top + rect.height / 2;
+  item.classList.add(before ? "column-panel-drop-before" : "column-panel-drop-after");
+}
+
+function onColumnsListDrop(event) {
+  const draggingId = state.draggingColumnId;
+  if (!draggingId) {
+    return;
+  }
+
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+
+  const item = target.closest(".board-item[data-column-id]");
+  if (!(item instanceof HTMLElement)) {
+    return;
+  }
+
+  const targetColumnId = item.dataset.columnId;
+  if (!targetColumnId || targetColumnId === draggingId) {
+    return;
+  }
+
+  event.preventDefault();
+  const position = item.classList.contains("column-panel-drop-before") ? "before" : "after";
+  clearColumnsPanelDropIndicators();
+  onMoveColumnByDrop(draggingId, targetColumnId, position);
+}
+
+function onColumnsListDragEnd() {
+  state.draggingColumnId = null;
+  document.body.classList.remove("drag-scroll-main-only");
+  clearColumnsPanelDropIndicators();
+}
+
+function clearColumnsPanelDropIndicators() {
+  dom.columnsList?.querySelectorAll(".board-item[data-column-id]").forEach((item) => {
+    item.classList.remove("column-panel-drop-before", "column-panel-drop-after", "column-panel-dragging");
+  });
+}
+
 function switchBoard(boardId) {
   const target = state.boards.find((board) => board.id === boardId);
   if (!target) {
@@ -1871,7 +2007,18 @@ function onVisibilityChange() {
 }
 
 function onAppWheel(event) {
-  if (!(event.target instanceof Element) || !dom.appMainScroll) {
+  if (!dom.appMainScroll) {
+    return;
+  }
+
+  const isDragging = Boolean(state.draggingTaskId || state.draggingColumnId);
+  if (isDragging) {
+    event.preventDefault();
+    dom.appMainScroll.scrollTop += event.deltaY;
+    return;
+  }
+
+  if (!(event.target instanceof Element)) {
     return;
   }
 
@@ -1899,6 +2046,25 @@ function onAppWheel(event) {
 
   event.preventDefault();
   dom.appMainScroll.scrollTop += event.deltaY;
+}
+
+function onLegacyMouseWheel(event) {
+  if (!dom.appMainScroll) {
+    return;
+  }
+
+  const isDragging = Boolean(state.draggingTaskId || state.draggingColumnId);
+  if (!isDragging) {
+    return;
+  }
+
+  const legacyDelta = typeof event.wheelDelta === "number" ? -event.wheelDelta : 0;
+  if (!legacyDelta) {
+    return;
+  }
+
+  event.preventDefault();
+  dom.appMainScroll.scrollTop += legacyDelta;
 }
 
 function onCopyPromptTemplate() {
