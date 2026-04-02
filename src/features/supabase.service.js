@@ -37,12 +37,16 @@ export async function initAuthSession({ onAuthChange }) {
 
 export async function signInWithPassword(email, password) {
   const client = await initSupabaseClient();
-  return client.auth.signInWithPassword({ email, password });
+  const result = await client.auth.signInWithPassword({ email, password });
+  currentUser = result?.data?.user || result?.data?.session?.user || null;
+  return result;
 }
 
 export async function signUpWithPassword(email, password) {
   const client = await initSupabaseClient();
-  return client.auth.signUp({ email, password });
+  const result = await client.auth.signUp({ email, password });
+  currentUser = result?.data?.user || result?.data?.session?.user || null;
+  return result;
 }
 
 export async function signOut() {
@@ -50,6 +54,7 @@ export async function signOut() {
     return;
   }
   await supabaseClient.auth.signOut();
+  currentUser = null;
 }
 
 export async function fetchOwnProfile() {

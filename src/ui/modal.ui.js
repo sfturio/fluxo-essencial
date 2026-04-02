@@ -1,7 +1,13 @@
 ﻿import { normalizeDeadline } from "../utils/date.js";
 
 export function updatePageLock(dom) {
-  const hasOverlayOpen = !dom.aiModalOverlay?.hidden || !dom.boardsOverlay?.hidden || !dom.taskModalOverlay?.hidden || !dom.helpModalOverlay?.hidden || !dom.authModalOverlay?.hidden;
+  const hasOverlayOpen =
+    !dom.aiModalOverlay?.hidden
+    || !dom.boardsOverlay?.hidden
+    || !dom.taskModalOverlay?.hidden
+    || !dom.helpModalOverlay?.hidden
+    || !dom.authModalOverlay?.hidden
+    || !dom.usernameModalOverlay?.hidden;
   document.body.classList.toggle("overlay-open", Boolean(hasOverlayOpen));
 }
 

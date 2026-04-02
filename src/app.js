@@ -537,10 +537,28 @@ async function onAuthSubmit(event) {
   if (dom.authError) {
     dom.authError.textContent = "";
   }
+  if (!authSessionReady) {
+    await initAuth();
+  }
 
-  const result = authMode === "signup"
-    ? await signUpWithPassword(email, password)
-    : await signInWithPassword(email, password);
+  if (!authSessionReady) {
+    if (dom.authError) {
+      dom.authError.textContent = "Servico de autenticacao indisponivel. Tente novamente.";
+    }
+    return;
+  }
+
+  let result;
+  try {
+    result = authMode === "signup"
+      ? await signUpWithPassword(email, password)
+      : await signInWithPassword(email, password);
+  } catch (error) {
+    if (dom.authError) {
+      dom.authError.textContent = `Erro de autenticacao: ${String(error?.message || "tente novamente")}`;
+    }
+    return;
+  }
 
   if (result.error) {
     if (dom.authError) {
