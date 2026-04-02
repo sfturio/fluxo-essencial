@@ -1588,6 +1588,22 @@ function onColumnsListClick(event) {
     return;
   }
 
+  if (action === "toggle-column-important") {
+    const board = getActiveBoard();
+    if (!board) {
+      return;
+    }
+
+    const column = board.columns.find((item) => item.id === columnId);
+    if (!column) {
+      return;
+    }
+
+    setColumnImportant(columnId, !column.important);
+    render();
+    return;
+  }
+
   if (action === "edit-column") {
     state.editingColumnId = columnId;
     state.deleteConfirmColumnId = null;

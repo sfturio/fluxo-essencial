@@ -76,6 +76,14 @@ export function renderColumnsPanel({ dom, state, activeColumns, activeBoardId })
       : `
         <button type="button" class="board-select active">${escapeHtml(column.name)}</button>
         <div class="board-actions">
+          <button
+            type="button"
+            class="${column.important ? "important-toggle active" : "important-toggle"}"
+            data-action="toggle-column-important"
+            data-column-id="${column.id}"
+            title="${column.important ? "Remover destaque da coluna" : "Marcar coluna como importante"}"
+            aria-label="${column.important ? "Remover destaque da coluna" : "Marcar coluna como importante"}"
+          >!</button>
           <button type="button" data-action="edit-column" data-column-id="${column.id}">Renomear</button>
           <button type="button" data-action="delete-column" data-column-id="${column.id}" ${canDelete ? "" : "disabled"}>Excluir</button>
         </div>

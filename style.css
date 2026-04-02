@@ -1612,6 +1612,22 @@ body.focus-mode .focus-column-option.active {
   color: #8a5757;
 }
 
+.board-actions .important-toggle.active {
+  color: #cf7280;
+  background: color-mix(in srgb, #4a1f26 34%, var(--surface-low));
+}
+
+.board-actions .important-toggle {
+  min-width: 2rem;
+  text-align: center;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.board-actions .important-toggle.active:hover {
+  background: color-mix(in srgb, #4a1f26 44%, var(--surface-low));
+}
+
 .board-actions button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
