@@ -30,7 +30,7 @@ export function renderBoardsPanel({ dom, state, boards, activeBoardId }) {
       : `
         <button type="button" class="board-select ${board.id === activeBoardId ? "active" : ""}" data-action="switch-board" data-board-id="${board.id}">${escapeHtml(board.name)}</button>
         <div class="board-actions">
-          <button type="button" data-action="edit-board" data-board-id="${board.id}">Editar</button>
+          <button type="button" data-action="edit-board" data-board-id="${board.id}">Renomear</button>
           <button type="button" data-action="delete-board" data-board-id="${board.id}" ${boards.length <= 1 ? "disabled" : ""}>Excluir</button>
         </div>
       `;
@@ -75,7 +75,7 @@ export function renderColumnsPanel({ dom, state, activeColumns, activeBoardId })
       : `
         <button type="button" class="board-select active">${escapeHtml(column.name)}</button>
         <div class="board-actions">
-          <button type="button" data-action="edit-column" data-column-id="${column.id}">Editar</button>
+          <button type="button" data-action="edit-column" data-column-id="${column.id}">Renomear</button>
           <button type="button" data-action="delete-column" data-column-id="${column.id}" ${canDelete ? "" : "disabled"}>Excluir</button>
         </div>
       `;
@@ -97,13 +97,15 @@ export function renderColumnsPanel({ dom, state, activeColumns, activeBoardId })
     dom.columnsList.appendChild(wrapper);
   });
 
-  const actions = document.createElement("div");
-  actions.className = "columns-danger-wrap";
+  if (!dom.columnsDangerSlot) {
+    return;
+  }
+
   const isConfirming = state.deleteConfirmAllColumnsBoardId === activeBoardId;
   const isFinalStep = isConfirming && state.deleteConfirmAllColumnsStep === 2;
 
   if (isConfirming) {
-    actions.innerHTML = `
+    dom.columnsDangerSlot.innerHTML = `
       <div class="board-delete-confirm columns-danger-confirm">
         <span>${isFinalStep ? "Ultima confirmacao: excluir tudo desta tabela?" : "Tem certeza? Isso remove todas as colunas e tarefas."}</span>
         <button type="button" class="danger" data-action="${isFinalStep ? "confirm-delete-all-columns" : "proceed-delete-all-columns"}">${isFinalStep ? "Excluir tudo" : "Continuar"}</button>
@@ -111,12 +113,10 @@ export function renderColumnsPanel({ dom, state, activeColumns, activeBoardId })
       </div>
     `;
   } else {
-    actions.innerHTML = `
+    dom.columnsDangerSlot.innerHTML = `
       <button type="button" class="columns-danger-btn" data-action="delete-all-columns">Excluir todas as colunas</button>
     `;
   }
-
-  dom.columnsList.appendChild(actions);
 }
 
 export function renderBoardColumns({ dom, state, tasks, activeColumns, context }) {

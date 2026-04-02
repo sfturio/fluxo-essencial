@@ -48,6 +48,7 @@
     newBoardInput: document.getElementById("new-board-input"),
     createBoardButton: document.getElementById("create-board-btn"),
     columnsList: document.getElementById("columns-list"),
+    columnsDangerSlot: document.getElementById("columns-danger-slot"),
     newColumnInput: document.getElementById("new-column-input"),
     createColumnButton: document.getElementById("create-column-btn"),
     exportBackupButton: document.getElementById("export-backup-btn"),
