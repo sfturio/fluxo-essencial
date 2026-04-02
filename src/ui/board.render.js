@@ -240,7 +240,7 @@ export function updateColumnTaskScrollLimits(boardElement) {
 
   const firstCards = Array.from(boardElement.querySelectorAll(".task-list:not(.is-collapsed-list) > .task:first-child"));
   const tallestFirstCardHeight = firstCards.reduce((maxHeight, card) => Math.max(maxHeight, card.offsetHeight), 0);
-  const singleCardShellHeight = Math.max(150, Math.ceil(tallestFirstCardHeight + 32));
+  const singleCardShellHeight = Math.max(126, Math.ceil(tallestFirstCardHeight + 24));
 
   boardElement.querySelectorAll(".task-list").forEach((taskList) => {
     if (taskList.classList.contains("is-collapsed-list")) {
@@ -305,7 +305,7 @@ function applyUniformTaskCardHeights(boardElement) {
   });
 
   const tallestCardHeight = cards.reduce((maxHeight, card) => Math.max(maxHeight, card.offsetHeight), 0);
-  const normalizedHeight = Math.max(130, Math.min(220, Math.ceil(tallestCardHeight)));
+  const normalizedHeight = Math.max(108, Math.min(190, Math.ceil(tallestCardHeight)));
 
   cards.forEach((card) => {
     card.style.minHeight = `${normalizedHeight}px`;

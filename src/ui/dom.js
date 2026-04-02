@@ -43,6 +43,8 @@
     settingsChangeUsernameButton: document.getElementById("settings-change-username"),
     settingsExportBackupButton: document.getElementById("settings-export-backup"),
     settingsImportBackupButton: document.getElementById("settings-import-backup"),
+    settingsZoomRange: document.getElementById("settings-zoom-range"),
+    settingsZoomValue: document.getElementById("settings-zoom-value"),
     boardToggleButton: document.getElementById("board-toggle"),
 
     boardsOverlay: document.getElementById("boards-overlay"),

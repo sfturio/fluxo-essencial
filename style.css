@@ -412,6 +412,33 @@ h1 {
   color: color-mix(in srgb, var(--text) 70%, var(--text-muted));
 }
 
+.settings-zoom-control {
+  margin-top: 0.12rem;
+  padding: 0.18rem 0.5rem 0.06rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.settings-zoom-title {
+  font-size: 0.76rem;
+  font-weight: 650;
+  color: color-mix(in srgb, var(--text) 82%, var(--text-muted));
+}
+
+.settings-zoom-value {
+  font-size: 0.74rem;
+  font-weight: 760;
+  color: color-mix(in srgb, var(--text) 84%, var(--text-muted));
+}
+
+.settings-zoom-range {
+  width: 100%;
+  margin: 0;
+  accent-color: color-mix(in srgb, var(--accent, #6f9dff) 72%, var(--text));
+}
+
 .task-form {
   display: grid;
   grid-template-columns: minmax(320px, 1fr) minmax(220px, 320px) auto auto;
@@ -892,7 +919,7 @@ body.drag-scroll-main-only .task-list.task-list-capped {
 .task {
   background: var(--surface-card);
   border-radius: 10px;
-  padding: 0.8rem 0.85rem;
+  padding: 0.62rem 0.72rem;
   cursor: grab;
   display: flex;
   flex-direction: column;

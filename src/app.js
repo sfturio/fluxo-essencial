@@ -96,6 +96,7 @@ async function boot() {
 
   bindEvents();
   initTheme(dom);
+  initUiZoom();
   initFocusMode(dom);
   seedInitialSampleTasks();
   await initAuth();
@@ -154,6 +155,7 @@ function bindEvents() {
   dom.boardToggleButton?.addEventListener("click", () => toggleBoardsPanel("tables"));
   dom.settingsColumnsToggleButton?.addEventListener("click", () => toggleBoardsPanel("columns"));
   dom.settingsChangeUsernameButton?.addEventListener("click", onChangeUsernameClick);
+  dom.settingsZoomRange?.addEventListener("input", onUiZoomChange);
   dom.themeToggleButton?.addEventListener("click", () => toggleTheme(dom));
   dom.focusToggleButton?.addEventListener("click", onToggleFocusMode);
 
@@ -324,6 +326,42 @@ async function handleAuthState(user) {
   } catch (error) {
     console.error("Falha de sincronizacao apos autenticacao:", error);
   }
+}
+
+function sanitizeUiZoom(value) {
+  const parsed = Number.parseInt(String(value || ""), 10);
+  if (!Number.isFinite(parsed)) {
+    return 100;
+  }
+  return Math.min(115, Math.max(85, parsed));
+}
+
+function applyUiZoom(percent) {
+  const nextPercent = sanitizeUiZoom(percent);
+  document.documentElement.style.fontSize = `${nextPercent}%`;
+
+  if (dom.settingsZoomRange) {
+    dom.settingsZoomRange.value = String(nextPercent);
+  }
+
+  if (dom.settingsZoomValue) {
+    dom.settingsZoomValue.textContent = `${nextPercent}%`;
+  }
+
+  writeString(STORAGE_KEYS.UI_ZOOM_KEY, String(nextPercent));
+}
+
+function initUiZoom() {
+  const stored = readString(STORAGE_KEYS.UI_ZOOM_KEY, "100");
+  applyUiZoom(stored);
+}
+
+function onUiZoomChange(event) {
+  const target = event.target;
+  if (!(target instanceof HTMLInputElement)) {
+    return;
+  }
+  applyUiZoom(target.value);
 }
 
 async function ensureOwnUsername() {
