@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Minimal Kanban - Technical Documentation</title>
+  <title>Minimal Kanban - Documentacao Tecnica</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -15,7 +15,7 @@
     <header id="top" class="doc-header">
       <div>
         <h1>Minimal Kanban</h1>
-        <p class="subtitle">Technical Documentation</p>
+        <p class="subtitle">Documentacao Tecnica</p>
       </div>
       <button id="theme-toggle" type="button" class="theme-btn" aria-label="Alternar tema" aria-pressed="false">
         <span id="theme-icon" class="material-symbols-outlined">dark_mode</span>
@@ -26,17 +26,17 @@
     <div class="doc-layout">
       <aside class="doc-sidebar">
         <nav class="doc-nav" aria-label="Navegacao da documentacao">
-          <a href="#top">Overview</a>
-          <a href="#architecture">Architecture</a>
-          <a href="#stack">Technology Stack</a>
-          <a href="#core-features">Core Features</a>
+          <a href="#top">Visao Geral</a>
+          <a href="#architecture">Arquitetura</a>
+          <a href="#stack">Stack Tecnologica</a>
+          <a href="#core-features">Funcionalidades</a>
           <a href="#parser">Parser</a>
-          <a href="#ai-planning">AI Planning</a>
-          <a href="#ui">User Interface</a>
-          <a href="#database">Database</a>
-          <a href="#security">Security (RLS)</a>
+          <a href="#ai-planning">Planejamento com IA</a>
+          <a href="#ui">Interface</a>
+          <a href="#database">Banco de Dados</a>
+          <a href="#security">Seguranca (RLS)</a>
           <a href="#sync">Sync</a>
-          <a href="#persistence">Persistence</a>
+          <a href="#persistence">Persistencia</a>
           <a href="#changelogs">Changelogs</a>
           <a href="#roadmap">Roadmap</a>
         </nav>
@@ -44,10 +44,10 @@
 
       <div class="doc-content">
         <section id="overview" class="doc-card">
-          <h2>1. Overview</h2>
+          <h2>1. Visao Geral</h2>
           <p>Minimal Kanban (Fluxo Essencial) e uma aplicacao Kanban minimalista focada em produtividade pessoal e organizacao de tarefas, com arquitetura modular no frontend e sincronizacao cloud via Supabase.</p>
           <p>O objetivo do projeto e oferecer um Kanban rapido, simples e extensivel, evitando complexidade desnecessaria comum em ferramentas tradicionais.</p>
-          <h3>Principais caracteristicas</h3>
+          <h3>Principais Caracteristicas</h3>
           <ul>
             <li>Interface minimalista e rapida</li>
             <li>Arquitetura modular escalavel</li>
@@ -58,7 +58,7 @@
         </section>
 
         <section id="architecture" class="doc-card">
-          <h2>2. Architecture Overview</h2>
+          <h2>2. Visao Geral da Arquitetura</h2>
           <p>A aplicacao utiliza uma arquitetura frontend modular baseada em ES Modules, organizada por responsabilidade.</p>
           <pre><code>src/
  +-- app.js
@@ -68,7 +68,7 @@
  +-- features/
  +-- storage/
  +-- utils/</code></pre>
-          <h3>Entry Point</h3>
+          <h3>Ponto de Entrada</h3>
           <p><code>src/app.js</code></p>
           <ul>
             <li>Inicializacao da aplicacao</li>
@@ -79,7 +79,7 @@
         </section>
 
         <section id="stack" class="doc-card">
-          <h2>3. Technology Stack</h2>
+          <h2>3. Stack Tecnologica</h2>
           <h3>Frontend</h3>
           <ul>
             <li>HTML</li>
@@ -99,8 +99,8 @@
         </section>
 
         <section id="core-features" class="doc-card">
-          <h2>4. Core Features</h2>
-          <h3>4.1 Kanban System</h3>
+          <h2>4. Funcionalidades Principais</h2>
+          <h3>4.1 Sistema Kanban</h3>
           <p>O sistema suporta multiplos boards com colunas personalizaveis.</p>
           <ul>
             <li>Criacao de boards</li>
@@ -108,7 +108,7 @@
             <li>Drag and drop entre colunas</li>
             <li>Limpeza de coluna com confirmacao</li>
           </ul>
-          <h3>4.2 Task Management</h3>
+          <h3>4.2 Gestao de Tarefas</h3>
           <ul>
             <li>Criacao</li>
             <li>Edicao inline</li>
@@ -116,7 +116,7 @@
             <li>Exclusao</li>
             <li>Movimentacao entre colunas</li>
           </ul>
-          <h3>4.3 Task Metadata</h3>
+          <h3>4.3 Metadados de Tarefas</h3>
           <table>
             <thead><tr><th>Campo</th><th>Descricao</th></tr></thead>
             <tbody>
@@ -132,7 +132,7 @@
         </section>
 
         <section id="parser" class="doc-card">
-          <h2>5. Task Input Automation</h2>
+          <h2>5. Automacao de Entrada de Tarefas</h2>
           <p>Parser de tarefas baseado em texto para converter comandos em metadados estruturados.</p>
           <table>
             <thead><tr><th>Simbolo</th><th>Funcao</th></tr></thead>
@@ -150,14 +150,14 @@
         </section>
 
         <section id="ai-planning" class="doc-card">
-          <h2>6. AI Planning System</h2>
+          <h2>6. Sistema de Planejamento com IA</h2>
           <p>Modal de planejamento assistido por IA para converter descricoes em multiplas tasks Kanban.</p>
           <p><strong>Entrada:</strong> Planejar lancamento do produto</p>
           <p><strong>Saida esperada:</strong> definir roadmap, criar landing page, configurar analytics, definir estrategia de marketing.</p>
         </section>
 
         <section id="ui" class="doc-card">
-          <h2>7. User Interface</h2>
+          <h2>7. Interface do Usuario</h2>
           <h3>Recursos</h3>
           <ul>
             <li>Dark mode / Light mode</li>
@@ -175,7 +175,7 @@
         </section>
 
         <section id="database" class="doc-card">
-          <h2>8. Database Architecture (Supabase)</h2>
+          <h2>8. Arquitetura de Banco de Dados (Supabase)</h2>
           <p>Modelagem escalavel preparada para colaboracao futura.</p>
           <h3>Tabelas</h3>
           <ul>
@@ -197,7 +197,7 @@
             <li>comments.task_id -> tasks.id</li>
             <li>comments.user_id -> profiles.id</li>
           </ul>
-          <h3>Indices principais</h3>
+          <h3>Indices Principais</h3>
           <ul>
             <li>tasks(board_id)</li>
             <li>tasks(column_id)</li>
@@ -207,7 +207,7 @@
         </section>
 
         <section id="security" class="doc-card">
-          <h2>9. Security Model (RLS)</h2>
+          <h2>9. Modelo de Seguranca (RLS)</h2>
           <p>Row Level Security habilitado.</p>
           <table>
             <thead><tr><th>Tabela</th><th>Regra</th></tr></thead>
@@ -223,7 +223,7 @@
         </section>
 
         <section id="sync" class="doc-card">
-          <h2>10. Sync Architecture</h2>
+          <h2>10. Arquitetura de Sync</h2>
           <p>Sincronizacao hibrida entre aplicacao e banco:</p>
           <ol>
             <li>Usuario autentica</li>
@@ -234,7 +234,7 @@
         </section>
 
         <section id="persistence" class="doc-card">
-          <h2>11. Data Persistence Strategy</h2>
+          <h2>11. Estrategia de Persistencia de Dados</h2>
           <h3>Local</h3>
           <ul>
             <li>Cache</li>
@@ -281,7 +281,7 @@
           </ul>
           <h3>V7 - Arquitetura Modular</h3>
           <p>Status: concluido. Separacao clara de responsabilidades.</p>
-          <h3>V8 - UX Improvements</h3>
+          <h3>V8 - Melhorias de UX</h3>
           <p>Status: em andamento. Planejado: acessibilidade, feedback ARIA, focus trap.</p>
           <h3>V9 - IA Avancada</h3>
           <p>Planejado: geracao inteligente de tarefas e sugestoes automaticas.</p>

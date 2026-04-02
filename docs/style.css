@@ -1,10 +1,14 @@
 ﻿:root {
-  --background: #f4f6fa;
-  --surface-low: #e9edf4;
+  --background: #eef3fb;
+  --surface-low: #e6edf7;
   --surface-card: #ffffff;
-  --text: #111827;
-  --text-muted: #667085;
-  --line-soft: #cfd7e4;
+  --text: #0f172a;
+  --text-muted: #5d6b82;
+  --line-soft: #c8d4e6;
+  --accent: #2f80ff;
+  --accent-soft: #6ea8ff;
+  --accent-strong: #1d4ed8;
+  --glow: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 * {
@@ -20,18 +24,25 @@ body {
   font-family: "Manrope", sans-serif;
   line-height: 1.5;
   color: var(--text);
-  background: var(--background);
+  background:
+    radial-gradient(1100px 500px at 10% -20%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 62%),
+    radial-gradient(900px 420px at 100% 0%, color-mix(in srgb, var(--accent-soft) 10%, transparent), transparent 58%),
+    var(--background);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 body.dark {
-  --background: #111214;
-  --surface-low: #1a1b1f;
-  --surface-card: #212329;
-  --text: #eef2f8;
-  --text-muted: #9ca6b6;
-  --line-soft: #3a3d46;
+  --background: #0a0f1a;
+  --surface-low: #111927;
+  --surface-card: #151f30;
+  --text: #ecf3ff;
+  --text-muted: #9db0cb;
+  --line-soft: #243247;
+  --accent: #52a0ff;
+  --accent-soft: #84bbff;
+  --accent-strong: #2f80ff;
+  --glow: color-mix(in srgb, var(--accent) 24%, transparent);
 }
 
 .material-symbols-outlined {
@@ -49,7 +60,9 @@ body.dark {
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.8rem;
-  margin-bottom: 0.9rem;
+  margin-bottom: 1rem;
+  padding: 0.9rem 0.1rem 1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--line-soft) 54%, transparent);
 }
 
 h1 {
@@ -59,6 +72,7 @@ h1 {
   letter-spacing: -0.01em;
   font-weight: 800;
   text-transform: uppercase;
+  text-shadow: 0 0 28px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .subtitle {
@@ -80,10 +94,12 @@ h1 {
   align-items: center;
   gap: 0.35rem;
   cursor: pointer;
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--glow) 50%, transparent);
 }
 
 .theme-btn:hover {
-  background: color-mix(in srgb, var(--surface-low) 72%, var(--surface-card));
+  background: color-mix(in srgb, var(--surface-low) 62%, var(--surface-card));
+  border-color: color-mix(in srgb, var(--accent-soft) 45%, var(--line-soft));
 }
 
 .doc-layout {
@@ -97,10 +113,12 @@ h1 {
   position: sticky;
   top: 1rem;
   align-self: start;
-  background: color-mix(in srgb, var(--surface-low) 64%, var(--surface-card));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-low) 66%, var(--surface-card)), color-mix(in srgb, var(--surface-low) 78%, var(--surface-card)));
   border: 1px solid color-mix(in srgb, var(--line-soft) 62%, transparent);
   border-radius: 14px;
   padding: 0.55rem;
+  box-shadow: 0 10px 30px color-mix(in srgb, #000 12%, transparent);
 }
 
 .doc-nav {
@@ -119,8 +137,9 @@ h1 {
 
 .doc-nav a:hover,
 .doc-nav a.active {
-  background: color-mix(in srgb, var(--surface-low) 74%, var(--surface-card));
-  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface-card));
+  color: color-mix(in srgb, var(--text) 80%, #fff);
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--accent-soft) 72%, transparent);
 }
 
 .doc-content {
@@ -129,16 +148,19 @@ h1 {
 }
 
 .doc-card {
-  background: color-mix(in srgb, var(--surface-low) 64%, var(--surface-card));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-low) 62%, var(--surface-card)), color-mix(in srgb, var(--surface-low) 76%, var(--surface-card)));
   border: 1px solid color-mix(in srgb, var(--line-soft) 62%, transparent);
   border-radius: 14px;
   padding: 0.95rem 1rem;
+  box-shadow: 0 12px 34px color-mix(in srgb, #000 12%, transparent);
 }
 
 .doc-card h2 {
   margin: 0 0 0.55rem;
   font-size: 1.18rem;
   letter-spacing: -0.01em;
+  color: color-mix(in srgb, var(--accent-soft) 65%, var(--text));
 }
 
 .doc-card h3 {
@@ -174,16 +196,19 @@ h1 {
   line-height: 1;
   padding: 0.36rem 0.46rem;
   cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease;
 }
 
 .copy-btn:hover {
-  background: color-mix(in srgb, var(--surface-low) 72%, var(--surface-card));
+  background: color-mix(in srgb, var(--surface-low) 66%, var(--surface-card));
+  border-color: color-mix(in srgb, var(--accent-soft) 50%, var(--line-soft));
 }
 
 .doc-card pre {
   margin: 0.5rem 0;
-  background: color-mix(in srgb, var(--surface-low) 74%, var(--surface-card));
+  background: color-mix(in srgb, var(--surface-low) 82%, var(--surface-card));
   border: 1px solid color-mix(in srgb, var(--line-soft) 62%, transparent);
+  border-left: 3px solid color-mix(in srgb, var(--accent-soft) 52%, transparent);
   border-radius: 10px;
   padding: 0.7rem;
   overflow: auto;
@@ -209,7 +234,8 @@ h1 {
 }
 
 .doc-card th {
-  background: color-mix(in srgb, var(--surface-low) 78%, var(--surface-card));
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface-low));
+  color: color-mix(in srgb, var(--text) 88%, #fff);
 }
 
 @media (max-width: 980px) {
