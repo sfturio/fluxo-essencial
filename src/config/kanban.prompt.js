@@ -4,8 +4,8 @@ Regras:
 - Separe tarefas usando ";"
 - Comece com verbos (criar, implementar, corrigir, adicionar)
 - Use:
-  ! = mover para "Em andamento"
-  !! = alta prioridade
+  ! = alta prioridade (somente no inicio)
+  >coluna = define coluna de destino (ex: >em andamento)
   ( ) = categoria
   @ = responsável
   # = tags
@@ -14,7 +14,7 @@ Regras:
 - Sem explicações
 
 Exemplo:
-!criar API (manhã) @joao #backend +05-04-2026
+!>em andamento corrigir bug login @joao #backend +05-04-2026
 
 Ideia:
 `;

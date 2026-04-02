@@ -34,7 +34,6 @@ import {
   moveTask,
   moveTaskByDrop,
 } from "./services/task.service.js";
-import { gerarTasksIA } from "./services/planner.service.js";
 import { getExamplePlanInput, parseTasks } from "./utils/parser.js";
 import { isUuid, normalizeSpaces, uid } from "./utils/helpers.js";
 import { getDom } from "./ui/dom.js";
@@ -864,6 +863,58 @@ function onMoveTaskByDrop(draggedId, targetColumnId, beforeTaskId) {
   render();
 }
 
+function normalizeColumnKey(name) {
+  return normalizeSpaces(name).toLowerCase();
+}
+
+function resolveOrCreateColumnId(columnName) {
+  const board = getActiveBoard();
+  if (!board) {
+    return getPrimaryColumnId();
+  }
+
+  const requestedName = normalizeSpaces(columnName || "");
+  const fallbackName = "Próximos";
+  const desiredName = requestedName || fallbackName;
+
+  const findByName = (name) => {
+    const key = normalizeColumnKey(name);
+    if (!key) return null;
+    return board.columns.find((column) => normalizeColumnKey(column.name) === key) || null;
+  };
+
+  let found = findByName(desiredName);
+  if (!found && !requestedName) {
+    found = findByName("Proximos");
+  }
+
+  if (found) {
+    return found.id;
+  }
+
+  const newColumn = createColumn(desiredName, board.columns);
+  board.columns = [...normalizeBoardColumns(board.columns), newColumn];
+  saveBoards();
+  return newColumn.id;
+}
+
+function mapGeneratedTasksToBoard(generated, fallbackTask = null) {
+  const source = Array.isArray(generated) ? generated : [];
+  const list = source.length > 0 ? source : (fallbackTask ? [fallbackTask] : []);
+  if (list.length === 0) {
+    return [];
+  }
+
+  return list.map((task) => {
+    const status = resolveOrCreateColumnId(task?.columnName);
+    return normalizeTask({
+      ...task,
+      id: uid(),
+      status,
+    });
+  });
+}
+
 function onCreateTask(event) {
   event.preventDefault();
 
@@ -875,28 +926,22 @@ function onCreateTask(event) {
     return;
   }
 
-  const parsed = parseTasks(rawTitle);
-  const created = parsed.length > 0
-    ? parsed
-    : [{
-        title: rawTitle,
-        description: rawDescription,
-        category: rawDescription ? rawDescription.toUpperCase() : null,
-        assignee: null,
-        tags: [],
-        comments: [],
-        deadline: null,
-        completedAt: null,
-        status: getPrimaryColumnId(),
-        priority: "normal",
-        createdAt: new Date(),
-      }];
+  const parsed = parseTasks(rawTitle, { columnNames: getActiveColumns().map((column) => column.name) });
+  const fallbackTask = {
+    title: rawTitle,
+    description: rawDescription,
+    category: rawDescription ? rawDescription.toUpperCase() : null,
+    assignee: null,
+    tags: [],
+    comments: [],
+    deadline: null,
+    completedAt: null,
+    columnName: null,
+    priority: "normal",
+    createdAt: new Date(),
+  };
 
-  const mapped = created.map((task) => normalizeTask({
-    ...task,
-    id: uid(),
-    status: task.status || getPrimaryColumnId(),
-  }));
+  const mapped = mapGeneratedTasksToBoard(parsed, fallbackTask);
 
   state.tasks = [...state.tasks, ...mapped];
   saveTasks();
@@ -913,7 +958,9 @@ function onGenerateIATasks() {
   const input = normalizeSpaces(dom.aiPlanInput?.value || "");
   if (!input) {
     if (state.tasks.length === 0) {
-      const generatedDefault = gerarTasksIA(getExamplePlanInput());
+      const generatedDefault = parseTasks(getExamplePlanInput(), {
+        columnNames: getActiveColumns().map((column) => column.name),
+      });
       const defaultTasks = mapGeneratedTasksToBoard(generatedDefault);
       if (defaultTasks.length > 0) {
         state.tasks = [...state.tasks, ...defaultTasks];
@@ -931,7 +978,9 @@ function onGenerateIATasks() {
     return;
   }
 
-  const generated = gerarTasksIA(input);
+  const generated = parseTasks(input, {
+    columnNames: getActiveColumns().map((column) => column.name),
+  });
   const next = mapGeneratedTasksToBoard(generated);
   if (next.length === 0) {
     dom.aiPlanInput.focus();
@@ -955,23 +1004,13 @@ function seedInitialSampleTasks() {
     return;
   }
 
-  const sample = gerarTasksIA(getExamplePlanInput());
+  const sample = parseTasks(getExamplePlanInput(), {
+    columnNames: getActiveColumns().map((column) => column.name),
+  });
   state.tasks = mapGeneratedTasksToBoard(sample);
 
   saveTasks();
   writeString(STORAGE_KEYS.INITIAL_SAMPLE_KEY, "done");
-}
-
-function mapGeneratedTasksToBoard(generated) {
-  if (!Array.isArray(generated) || generated.length === 0) {
-    return [];
-  }
-
-  return generated.map((task) => normalizeTask({
-    ...task,
-    id: uid(),
-    status: task.status === "inprogress" ? getFocusColumnId() : getPrimaryColumnId(),
-  }));
 }
 
 function toggleBoardsPanel(mode = "tables") {

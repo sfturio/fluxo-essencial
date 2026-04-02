@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Minimal Kanban — Technical Documentation</title>
+  <title>Minimal Kanban - Technical Documentation</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -37,6 +37,7 @@
           <a href="#security">Security (RLS)</a>
           <a href="#sync">Sync</a>
           <a href="#persistence">Persistence</a>
+          <a href="#changelogs">Changelogs</a>
           <a href="#roadmap">Roadmap</a>
         </nav>
       </aside>
@@ -136,16 +137,16 @@
           <table>
             <thead><tr><th>Simbolo</th><th>Funcao</th></tr></thead>
             <tbody>
-              <tr><td><code>!</code></td><td>mover para Em andamento</td></tr>
-              <tr><td><code>!!</code></td><td>prioridade alta</td></tr>
+              <tr><td><code>!</code></td><td>prioridade alta (somente no inicio)</td></tr>
+              <tr><td><code>&gt;coluna</code></td><td>define a coluna de destino</td></tr>
               <tr><td><code>(categoria)</code></td><td>categoria</td></tr>
               <tr><td><code>@responsavel</code></td><td>responsavel</td></tr>
               <tr><td><code>#tag</code></td><td>tag</td></tr>
               <tr><td><code>+data</code></td><td>data</td></tr>
             </tbody>
           </table>
-          <pre><code>!criar API (backend) @joao #node +05-04-2026</code></pre>
-          <p>Resultado: coluna Em andamento, categoria backend, responsavel joao, tag node, data 05-04-2026.</p>
+          <pre><code>!&gt;em andamento criar API (backend) @joao #node +05-04-2026</code></pre>
+          <p>Resultado: coluna Em andamento, prioridade alta, categoria backend, responsavel joao, tag node, data 05-04-2026.</p>
         </section>
 
         <section id="ai-planning" class="doc-card">
@@ -246,8 +247,19 @@
           </ul>
         </section>
 
+        <section id="changelogs" class="doc-card">
+          <h2>12. Changelogs</h2>
+          <p>Historico resumido com foco apenas nos marcos que mudaram a base do produto.</p>
+          <ul>
+            <li><strong>2026-03-29:</strong> arquitetura frontend modularizada em ES Modules (separacao de estado, servicos, UI e features), facilitando manutencao e evolucao.</li>
+            <li><strong>2026-03-29:</strong> Supabase Auth + sincronizacao cloud reativados com modelo escalavel para boards, colunas e tarefas.</li>
+            <li><strong>2026-03-29:</strong> migracao de schema escalavel com RLS completo, tabelas de suporte (<code>columns</code>, <code>task_tags</code>, <code>comments</code>) e politicas por dono do board.</li>
+            <li><strong>2026-03-30:</strong> parser/planner ajustado para criar tarefas padrao quando o input vier vazio em board sem tarefas (evita fluxo morto).</li>
+            <li><strong>2026-03-30 a 2026-04-02:</strong> melhoria da documentacao tecnica (navegacao por anchors, sidebar ativa e copia de blocos de codigo).</li>
+          </ul>
+        </section>
         <section id="roadmap" class="doc-card">
-          <h2>12. Roadmap</h2>
+          <h2>13. Roadmap</h2>
           <h3>V0 - V6 (concluido)</h3>
           <ul>
             <li>Kanban base</li>

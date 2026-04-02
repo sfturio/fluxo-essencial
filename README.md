@@ -27,8 +27,8 @@ Kanban pessoal frontend-only feito com HTML, CSS e JavaScript vanilla.
 Comandos suportados:
 
 - `;` separa tarefas
-- `!` envia para Em andamento
-- `!!` define prioridade alta
+- `!` no início define prioridade alta
+- `>coluna` define a coluna de destino
 - `(categoria)` define categoria
 - `@responsavel` define responsavel
 - `#tag` adiciona tag
@@ -37,7 +37,7 @@ Comandos suportados:
 Exemplo:
 
 ```text
-!criar API (manha) @joao #backend +05042026; !!revisar fluxo de caixa (financeiro) @ana #urgente +07-04-2026
+!>em andamento criar API (manha) @joao #backend +05042026; >futuro revisar fluxo de caixa (financeiro) @ana #urgente +07-04-2026
 ```
 
 ## Arquitetura (ES Modules)
